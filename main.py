@@ -89,6 +89,9 @@ def get_paraphrased_chunk(content):
     if '</think>' in content:
         done_thinking = True
         content = content[:content.rfind('</think>')]
+    if '<｜end▁of▁thinking｜>' in content:
+        done_thinking = True
+        content = content[:content.rfind('<｜end▁of▁thinking｜>')]
     
     chunk = reword_slice(content)
     if done_thinking:
@@ -123,11 +126,13 @@ def get_paraphrased_response(prompt, sys_prompt_extra="", prefill="<think>\n", m
 
                 if not done_thinking:
                     chunk, done_thinking, reworded_pair = get_paraphrased_chunk(response.choices[0].message.content)
+                    cprint(chunk)
                     base_messages[2]["content"] = f'{base_messages[2]["content"]}{chunk}'
                     reworded_pairs.append(reworded_pair)
                     response.choices[0].finish_reason = ""
                 else:
                     base_messages[2]["content"] = f'{base_messages[2]["content"]}{response.choices[0].message.content}'
+
 
                 if done_thinking:
                     extracted_reasoning = extract_reasoning(base_messages[2]["content"])
