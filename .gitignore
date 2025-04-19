@@ -3,6 +3,15 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Environment variables
+.envrc
+# .cache
+# .cursor
+
+# Jekyll
+docs/_site/
+docs/.jekyll-cache/
+
 # C extensions
 *.so
 

@@ -1,0 +1,7 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+- Make the minimum change requested. Avoid changing files or functions that are not directly involved in the current change, unless necessary.
