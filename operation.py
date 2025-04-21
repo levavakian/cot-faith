@@ -87,7 +87,7 @@ def gen_operation(depth=0, max_depth=5):
             
     
 def gen_dataset(num_samples=30, options=None):
-    choices = [2, 3, 4]
+    choices = [4, 5, 6]
     if options is not None:
         choices = options
     dataset = []
