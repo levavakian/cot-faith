@@ -66,7 +66,7 @@ def cprint(*args, color: str | None = None, **kwargs):
 def pretty_json(obj):
     return json.dumps(obj, indent=4)
 
-def save_data(obj, prefix: str):
+def save_data(obj, prefix: str, cache_dir: str = ".cache"):
     """
     Saves the given object as a pretty-printed JSON file in the 'cache' directory.
 
@@ -78,7 +78,6 @@ def save_data(obj, prefix: str):
     Returns:
         The full path to the saved file.
     """
-    cache_dir = ".cache"
     # Ensure the cache directory exists
     os.makedirs(cache_dir, exist_ok=True)
 
