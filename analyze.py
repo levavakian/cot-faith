@@ -124,15 +124,14 @@ unparaphrased_correct = [s.unparaphrased.answer == s.unparaphrased.ground_truth 
 paraphrased_correct = [s.paraphrased.answer == s.paraphrased.ground_truth for s in samples]
 concise_correct = [s.concise.answer == s.concise.ground_truth for s in samples]
 
-print(crosstab(base_correct, unparaphrased_correct))
-mc = mcnemar(crosstab(base_correct, unparaphrased_correct), exact=True)
-print(f"Base vs Unparaphrased: χ²={mc.statistic:.2f}, p={mc.pvalue:.4f}")
+mc = mcnemar(crosstab(base_correct, unparaphrased_correct).count, exact=True)
+print(f"Base vs Unparaphrased: McNemar exact={mc.statistic:.2f}, p={mc.pvalue:.4f}")
 
-mc = mcnemar(crosstab(base_correct, paraphrased_correct), exact=True)
-print(f"Base vs Paraphrased: χ²={mc.statistic:.2f}, p={mc.pvalue:.4f}")
+mc = mcnemar(crosstab(base_correct, paraphrased_correct).count, exact=True)
+print(f"Base vs Paraphrased: McNemar exact={mc.statistic:.2f}, p={mc.pvalue:.4f}")
 
-mc = mcnemar(crosstab(base_correct, concise_correct), exact=True)
-print(f"Base vs Concise: χ²={mc.statistic:.2f}, p={mc.pvalue:.4f}")
+mc = mcnemar(crosstab(base_correct, concise_correct).count, exact=True)
+print(f"Base vs Concise: McNemar exact={mc.statistic:.2f}, p={mc.pvalue:.4f}")
 
 with open('docs/samples.json', 'w') as f:
     json.dump([s.to_json() for s in samples], f, indent=4)
