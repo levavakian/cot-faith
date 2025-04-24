@@ -401,6 +401,7 @@ def populate_datastore(datastore, samples, rewordings, results, answers, name):
     datastore[name]["unparaphrased"]["rewordings"] = rewordings[0]
     datastore[name]["paraphrased"]["rewordings"] = rewordings[1]
     datastore[name]["concise"]["rewordings"] = rewordings[2]
+
 def arithmetic(suffix=""):
     random.seed(87)
     samples = gen_dataset(num_samples=30, options=[4, 5, 6])

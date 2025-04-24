@@ -20,6 +20,15 @@ title: Document
   }
 </style>
 
+<script id="samples-data" type="application/json">
+  {% include_relative samples.json %}
+</script>
+<script>
+  window.samples = JSON.parse(
+    document.getElementById('samples-data').textContent
+  );
+</script>
+
 <div class="container">
   <h1>Chain of Thought Faithfulness in Deepseek R1</h1>
 
@@ -113,6 +122,8 @@ title: Document
     ];
     createParaphraseWidget(originals, replacements, 'paraphrase-widget');
   </script>
+
+
 
   <h1>Hello World</h1>
   
