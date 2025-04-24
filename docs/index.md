@@ -27,6 +27,7 @@ title: Document
   window.samples = JSON.parse(
     document.getElementById('samples-data').textContent
   );
+  window.samples_no_repeats = window.samples.slice(0, 30);
 </script>
 
 <div class="container">
@@ -56,74 +57,24 @@ title: Document
   <script src="view_widget.js"></script>
   
   <script>
-  const prompts     = [
-    "What is 2+2?",
-    "Define the Pythagorean theorem.",
-    "Explain how a bubble sort works."
-  ];
-  const responses   = [
-    "Here is my long reasoning… (could be hundreds of lines)",
-    "Reasoning about Pythagoras…",
-    "Step-by-step bubble sort explanation…"
-  ];
-  const givenAnswers = [ "4", "a^2 + b^2 = c^2", "N/A" ];
-  const finalAnswers = [ "4", "a² + b² = c²", "It repeatedly swaps adjacent out-of-order items." ];
-  
-  // finally:
-  createPromptWidget(prompts, responses, givenAnswers, finalAnswers, 'prompt-widget');
+    const prompts = window.samples_no_repeats.map(s => s.base.user_prompt);
+    const responses = window.samples_no_repeats.map(s => s.base.output);
+    const givenAnswers = window.samples_no_repeats.map(s => s.base.ground_truth);
+    const finalAnswers = window.samples_no_repeats.map(s => s.base.answer);
+    createPromptWidget(prompts, responses, givenAnswers, finalAnswers, 'prompt-widget');
   </script>
 
   <!-- paraphrase-chain widget -->
   <div id="paraphrase-widget"></div>
   <script src="reword.js"></script>
   <script>
-    // example chain-of-thought + paraphrases
-    const originals = [
-      "Here is my long reasoning… (could be hundreds of lines)",
-      "Here is my long reasoning… (could be hundreds of lines)",
-      "Here is my long reasoning… (could be hundreds of lines)",
-      "Here is my long reasoning… (could be hundreds of lines)",
-      "Here is my long reasoning… (could be hundreds of lines)",
-      "Here is my long reasoning… (could be hundreds of lines)",
-      "Here is my long reasoning… (could be hundreds of lines)",
-      "Here is my long reasoning… (could be hundreds of lines)",
-      "Here is my long reasoning… (could be hundreds of lines)",
-      "Here is my long reasoning… (could be hundreds of lines)",
-      "Here is my long reasoning… (could be hundreds of lines)",
-      "I then realize that 2+2 must be four because…",
-      "I then realize that 2+2 must be four because…",
-      "I then realize that 2+2 must be four because…",
-      "I then realize that 2+2 must be four because…",
-      "I then realize that 2+2 must be four because…",
-      "I then realize that 2+2 must be four because…",
-      "I then realize that 2+2 must be four because…",
-      "Finally I conclude succinctly."
-    ];
-    const replacements = [
-      "2+2 = 4",
-      "2+2 = 4",
-      "2+2 = 4",
-      "2+2 = 4",
-      "2+2 = 4",
-      "2+2 = 4",
-      "2+2 = 4",
-      "2+2 = 4",
-      "2+2 = 4",
-      "2+2 = 4",
-      "2+2 = 4",
-      "Sum of two and two equals four",
-      "Sum of two and two equals four",
-      "Sum of two and two equals four",
-      "Sum of two and two equals four",
-      "Sum of two and two equals four",
-      "Sum of two and two equals four",
-      "Sum of two and two equals four",
-      "It's simply four"
-    ];
+    const sample28 = window.samples[27]; // Use 28th sample (index 27)
+    const originals = sample28.paraphrased.rewordings.map(pair => pair[0]);
+    const replacements = sample28.paraphrased.rewordings.map(pair => pair[1]);
+    console.log("orig", originals[originals.length - 1]);
+    console.log("replace", replacements[replacements.length - 1]);
     createParaphraseWidget(originals, replacements, 'paraphrase-widget');
   </script>
-
-
 
   <h1>Hello World</h1>
   

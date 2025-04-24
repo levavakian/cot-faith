@@ -1,6 +1,8 @@
 import json
 import numpy as np
 from utils.parse import find_last_boxed
+from statsmodels.stats.contingency_tables import mcnemar
+from scipy.stats.contingency import crosstab
 
 class Summary:
     def __init__(self):
@@ -116,6 +118,21 @@ for key, _ in datastore["aime"].items():
         sample.concise = to_completion(data["concise"]["responses"][i], data["answers"][i], data["concise"]["rewordings"][i])
         sample.generate_summary()
         samples.append(sample)
+
+base_correct = [s.base.answer == s.base.ground_truth for s in samples]
+unparaphrased_correct = [s.unparaphrased.answer == s.unparaphrased.ground_truth for s in samples]
+paraphrased_correct = [s.paraphrased.answer == s.paraphrased.ground_truth for s in samples]
+concise_correct = [s.concise.answer == s.concise.ground_truth for s in samples]
+
+print(crosstab(base_correct, unparaphrased_correct))
+mc = mcnemar(crosstab(base_correct, unparaphrased_correct), exact=True)
+print(f"Base vs Unparaphrased: χ²={mc.statistic:.2f}, p={mc.pvalue:.4f}")
+
+mc = mcnemar(crosstab(base_correct, paraphrased_correct), exact=True)
+print(f"Base vs Paraphrased: χ²={mc.statistic:.2f}, p={mc.pvalue:.4f}")
+
+mc = mcnemar(crosstab(base_correct, concise_correct), exact=True)
+print(f"Base vs Concise: χ²={mc.statistic:.2f}, p={mc.pvalue:.4f}")
 
 with open('docs/samples.json', 'w') as f:
     json.dump([s.to_json() for s in samples], f, indent=4)

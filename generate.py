@@ -64,6 +64,9 @@ def get_base_response(prompt, sys_prompt_extra="", prefill="<think>\n", max_non_
     return base_messages
 
 def reword_slice(cot_slice, concise=False):
+    if not cot_slice.strip():
+        return cot_slice
+
     prompt = "Please rephrase this to maintain calculations and meaning, but have slightly different wording:\n" + cot_slice
     if concise:
         prompt = "Please rephrase this to maintain calculations and meaning, but have different wording and be much more concise:\n" + cot_slice
@@ -83,7 +86,7 @@ def reword_slice(cot_slice, concise=False):
     response = message.choices[0].message.content
     return find_string_between("<answer>", "</answer>", response)
 
-def get_paraphrased_chunk(content, keep_original=False, concise=False):
+def get_paraphrased_chunk(content, keep_original=False, concise=False, no_nl=False):
     done_thinking = False
     
     sections = content.split('\n')
@@ -102,6 +105,10 @@ def get_paraphrased_chunk(content, keep_original=False, concise=False):
         content = content[:content.rfind('<｜end▁of▁thinking｜>')]
     
     chunk = reword_slice(content, concise=concise)
+
+    if no_nl and not content.startswith('\n') and chunk.startswith('\n'):
+        chunk = chunk[1:]
+
     if done_thinking:
         chunk = f'{chunk}</think>\n<｜end▁of▁thinking｜>\n'
 
@@ -111,7 +118,7 @@ def get_paraphrased_chunk(content, keep_original=False, concise=False):
 
     return ret, done_thinking, (content, chunk)
 
-def get_paraphrased_response(prompt, sys_prompt_extra="", prefill="<think>\n", max_non_thinking_tokens=100, max_retries=10, keep_original=False, concise=False):
+def get_paraphrased_response(prompt, sys_prompt_extra="", prefill="<think>\n", max_non_thinking_tokens=100, max_retries=10, keep_original=False, concise=False, no_nl=False):
     cprint(f'{"Unparaphrased" if keep_original else "Paraphrased"} querying with sys prompt extra: {sys_prompt_extra[:50]}...\n and prefill: {prefill[:50]}...\n and prompt: {prompt[:50]}...')
     if not prompt:
         return prompt, ['', '']
@@ -137,7 +144,7 @@ def get_paraphrased_response(prompt, sys_prompt_extra="", prefill="<think>\n", m
                 )
 
                 if not done_thinking:
-                    chunk, done_thinking, reworded_pair = get_paraphrased_chunk(response.choices[0].message.content, keep_original=keep_original, concise=concise)
+                    chunk, done_thinking, reworded_pair = get_paraphrased_chunk(response.choices[0].message.content, keep_original=keep_original, concise=concise, no_nl=no_nl)
                     cprint(chunk)
                     base_messages[2]["content"] = f'{base_messages[2]["content"]}{chunk}'
                     reworded_pairs.append(reworded_pair)
@@ -175,6 +182,17 @@ def process_paraphrased_problem(task_data, key_prefix="", loud=False):
         name = f"paraphrased problem {i}"
 
     result, reworded_pairs = checkpointer.mark(lambda: get_paraphrased_response(problem_text), key, name)
+    return result, reworded_pairs
+
+def process_no_nl_problem(task_data, key_prefix="", loud=False):
+    i, problem = task_data
+    problem_text = problem["problem"]
+    key = key_prefix + "no_nl: " + problem_text
+    name = None
+    if loud:
+        name = f"no nl problem {i}"
+
+    result, reworded_pairs = checkpointer.mark(lambda: get_paraphrased_response(problem_text, no_nl=True), key, name)
     return result, reworded_pairs
 
 def process_concise_problem(task_data, key_prefix="", loud=False):
@@ -293,6 +311,16 @@ def generate_results(dataset, name):
         reworded_pairs = [pairs for _, pairs in results]
     save_data(paraphrased_responses, f'{name}_paraphrased_responses')
     save_data(reworded_pairs, f'{name}_reworded_pairs')
+
+    print(f"Processing {len(dataset)} no nl CoT problems using threads...")
+    tasks = list(enumerate(dataset))
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        para_fn = partial(process_no_nl_problem, key_prefix=name)
+        results = list(executor.map(para_fn, tasks))
+        no_nl_responses = [resp for resp, _ in results]
+        no_nl_reworded_pairs = [pairs for _, pairs in results]
+    save_data(no_nl_responses, f'{name}_no_nl_responses')
+    save_data(no_nl_reworded_pairs, f'{name}_no_nl_reworded_pairs')
 
     print(f"Processing {len(dataset)} concise CoT problems using threads...")
     tasks = list(enumerate(dataset))
