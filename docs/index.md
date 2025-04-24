@@ -120,6 +120,16 @@ title: Document
       createBooleanTable(arithmetic_res, arithmetic_data, 'table-3');
   </script>
 
+  <p>Even without a CoT, around 50% to 60% of the time Deepseek will get the answer right. Still, the CoT is clearly required to get 100% correctness, and paraphrasing it does not seem to destroy any utility. It may still be that Deepseek uses <i>some</i> steganography -- maybe in the order of what calculation it decides to do next or in the variable names it chooses, but it looks unlikely that it is hiding information in things like the positions of periods or newlines.</p>
+
+  <p>But how sure are we?</p>
+
+  <p>Arithmetic is maybe too easy of a problem, and one ill suited to steganography. After all, the way we write equations is <i>already</i> very compact and symbolic, and the steps between arithmetic operations are pretty unambiguous. If I was a model, I wouldn't spend much time finding shortcuts there.</p>
+
+  <p>How about on harder problems? Pure reinforcement learning, when left to its own devices, will produce a CoT that's a jumble of languages and formats. Not very readable, unless you use extra rewards to <a href="https://arxiv.org/pdf/2501.12948">stuff all that reasoning back</a> into a human presentable shape. The most efficient CoT for solving hard problems doesn't necessarily align with the most human friendly CoT. Maybe, we'll see a different behavior with higher difficulties.</p>
+
+  <p>Thankfully, we don't have to think of the problems and answers ourselves. Thirty questions from the AIME2024 dataset are available for us, complete with ground truth answers. 
+
   <div id="prompt-widget"></div>  
   <script>
     const prompts = window.samples_no_repeats.map(s => s.base.user_prompt);
