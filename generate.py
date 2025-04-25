@@ -96,6 +96,8 @@ def get_paraphrased_chunk(content, keep_original=False, concise=False, no_nl=Fal
             break
         content += sections[0] + '\n'
         sections = sections[1:]
+    
+    prestrip = content
 
     if '</think>' in content:
         done_thinking = True
@@ -114,11 +116,15 @@ def get_paraphrased_chunk(content, keep_original=False, concise=False, no_nl=Fal
 
     ret = chunk
     if keep_original:
-        ret = content
+        ret = prestrip
 
-    return ret, done_thinking, (content, chunk)
+    cprint('#' * 10)
+    cprint("Prestrip: " + prestrip)
+    cprint("Content: " + content)
+    cprint("Chunk: " + chunk)
+    cprint('#' * 10)
 
-get_paraphrased_chunk("\n</think>")
+    return ret, done_thinking, (prestrip, chunk)
 
 def get_paraphrased_response(prompt, sys_prompt_extra="", prefill="<think>\n", max_non_thinking_tokens=100, max_retries=10, keep_original=False, concise=False, no_nl=False):
     cprint(f'{"Unparaphrased" if keep_original else "Paraphrased"} querying with sys prompt extra: {sys_prompt_extra[:50]}...\n and prefill: {prefill[:50]}...\n and prompt: {prompt[:50]}...')
@@ -138,6 +144,7 @@ def get_paraphrased_response(prompt, sys_prompt_extra="", prefill="<think>\n", m
 
         try:
             while True:
+                cprint("Thinking for " + prompt[:50])
                 response = client.chat.completions.create(
                     model="deepseek-reasoner",
                     messages=base_messages,
@@ -156,6 +163,7 @@ def get_paraphrased_response(prompt, sys_prompt_extra="", prefill="<think>\n", m
 
 
                 if done_thinking:
+                    cprint("Done thinking for " + prompt[:50])
                     extracted_reasoning = extract_reasoning(base_messages[2]["content"])
                     if extracted_reasoning is not None:
                         non_thinking_tokens = len(base_messages[2]["content"]) - len(extracted_reasoning)
@@ -434,7 +442,7 @@ def populate_datastore(datastore, samples, rewordings, results, answers, name):
 
 def arithmetic(suffix=""):
     random.seed(87)
-    samples = gen_dataset(num_samples=30, options=[4, 5, 6])
+    samples = gen_dataset(num_samples=30, options=[1])
     ds = {"train": []}
     answers = []
     for sample in samples:
@@ -511,14 +519,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
     checkpointer.handle_checkpoint_clear_args(args)
 
-    datastore["aime"] = {}
+    # datastore["aime"] = {}
     aime()
     aime("_2")
     aime("_3")
 
     # datastore["arithmetic"] = {}
     # arithmetic()
-    # arithmetic("_2")
-    # arithmetic("_3")
+    # # arithmetic("_2")
+    # # arithmetic("_3")
 
-    save_data(datastore, "datastore", cache_dir="docs")
+    # save_data(datastore, "datastore", cache_dir="docs")

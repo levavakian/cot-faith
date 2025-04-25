@@ -1,0 +1,17 @@
+[
+    [
+        {
+            "role": "system",
+            "content": "You are a helpful assistant. Return your final answer in \\boxed{} format. Only think within the <think></think> tags. As soon as the </think> tag is reached, stop thinking and reply only with the answer in \\boxed{} format. Any answers that do not immediately return in the \\boxed{} format after the <think></think> tags will be discarded and penalized. "
+        },
+        {
+            "role": "user",
+            "content": "Please solve the following problem:\nWhat is the result of ((4.28 + 8.1) - (4.85 + 1.9))?"
+        },
+        {
+            "role": "assistant",
+            "content": "<think>\n\nLet's start by computing ((4.28 + 8.1) - (4.85 + 1.9)). First, add the numbers in each set of parentheses.\n\nFirst step: 4.28 + 8.1 = 12.38.\n\nNext: 1.9 + 4.85 = 6.75.  \nThen, 12.38 - 6.75 = 5.63.\n</think>\n<｜end▁of▁thinking｜>\n\\boxed{5.63}",
+            "prefix": true
+        }
+    ]
+]

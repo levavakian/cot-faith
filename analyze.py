@@ -4,6 +4,49 @@ from utils.parse import find_last_boxed
 from statsmodels.stats.contingency_tables import mcnemar
 from scipy.stats.contingency import crosstab
 
+class Test:
+    def __init__(self):
+        self.crosstab = None
+        self.statistic = 0
+        self.pvalue = 0
+        self.exact = False
+    
+    def crosstab_to_json(self):
+        return {
+            "n00": int(self.crosstab[0][0]),
+            "n01": int(self.crosstab[0][1]),
+            "n10": int(self.crosstab[1][0]),
+            "n11": int(self.crosstab[1][1])
+        }
+    
+    def to_json(self):
+        return {
+            "crosstab": self.crosstab_to_json(),
+            "statistic": float(self.statistic),
+            "pvalue": float(self.pvalue),
+            "exact": bool(self.exact)
+        }
+    
+    def __str__(self):
+        return f"Statistic: {self.statistic}, P-value: {self.pvalue}, Exact: {self.exact}"
+        
+
+class Tests:
+    def __init__(self):
+        self.base_vs_unparaphrased = Test()
+        self.base_vs_paraphrased = Test()
+        self.base_vs_concise = Test()
+    
+    def to_json(self):
+        return {
+            "base_vs_unparaphrased": self.base_vs_unparaphrased.to_json(),
+            "base_vs_paraphrased": self.base_vs_paraphrased.to_json(),
+            "base_vs_concise": self.base_vs_concise.to_json()
+        }
+    
+    def __str__(self):
+        return f"Base vs Unparaphrased: {self.base_vs_unparaphrased}\nBase vs Paraphrased: {self.base_vs_paraphrased}\nBase vs Concise: {self.base_vs_concise}"
+
 class Summary:
     def __init__(self):
         self.base_length = 0
@@ -124,14 +167,37 @@ unparaphrased_correct = [s.unparaphrased.answer == s.unparaphrased.ground_truth 
 paraphrased_correct = [s.paraphrased.answer == s.paraphrased.ground_truth for s in samples]
 concise_correct = [s.concise.answer == s.concise.ground_truth for s in samples]
 
-mc = mcnemar(crosstab(base_correct, unparaphrased_correct).count, exact=True)
-print(f"Base vs Unparaphrased: McNemar exact={mc.statistic:.2f}, p={mc.pvalue:.4f}")
+base_vs_unparaphrased = crosstab(base_correct, unparaphrased_correct, levels=([False, True], [False, True])).count
+base_vs_paraphrased = crosstab(base_correct, paraphrased_correct, levels=([False, True], [False, True])).count
+base_vs_concise = crosstab(base_correct, concise_correct, levels=([False, True], [False, True])).count
 
-mc = mcnemar(crosstab(base_correct, paraphrased_correct).count, exact=True)
-print(f"Base vs Paraphrased: McNemar exact={mc.statistic:.2f}, p={mc.pvalue:.4f}")
+mc_unparaphrased = mcnemar(base_vs_unparaphrased, exact=True)
+print(f"Base vs Unparaphrased: McNemar exact={mc_unparaphrased.statistic:.2f}, p={mc_unparaphrased.pvalue:.4f}")
 
-mc = mcnemar(crosstab(base_correct, concise_correct).count, exact=True)
-print(f"Base vs Concise: McNemar exact={mc.statistic:.2f}, p={mc.pvalue:.4f}")
+mc_paraphrased = mcnemar(base_vs_paraphrased, exact=True)
+print(f"Base vs Paraphrased: McNemar exact={mc_paraphrased.statistic:.2f}, p={mc_paraphrased.pvalue:.4f}")
+
+mc_concise = mcnemar(base_vs_concise, exact=True)
+print(f"Base vs Concise: McNemar exact={mc_concise.statistic:.2f}, p={mc_concise.pvalue:.4f}")
+
+tests = Tests()
+tests.base_vs_unparaphrased = Test()
+tests.base_vs_unparaphrased.crosstab = base_vs_unparaphrased
+tests.base_vs_unparaphrased.statistic = mc_unparaphrased.statistic
+tests.base_vs_unparaphrased.pvalue = mc_unparaphrased.pvalue
+
+tests.base_vs_paraphrased = Test()
+tests.base_vs_paraphrased.crosstab = base_vs_paraphrased
+tests.base_vs_paraphrased.statistic = mc_paraphrased.statistic
+tests.base_vs_paraphrased.pvalue = mc_paraphrased.pvalue
+
+tests.base_vs_concise = Test()
+tests.base_vs_concise.crosstab = base_vs_concise
+tests.base_vs_concise.statistic = mc_concise.statistic
+tests.base_vs_concise.pvalue = mc_concise.pvalue
 
 with open('docs/samples.json', 'w') as f:
     json.dump([s.to_json() for s in samples], f, indent=4)
+
+with open('docs/tests.json', 'w') as f:
+    json.dump(tests.to_json(), f, indent=4)

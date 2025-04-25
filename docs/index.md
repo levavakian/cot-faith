@@ -20,16 +20,28 @@ title: Document
   }
 </style>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script src="reword.js"></script>
 <script src="table.js"></script>
 <script src="view_widget.js"></script>
+<script src="mcnemar.js"></script>
+<script src="reword_scatter.js"></script>
+<script src="response_scatter.js"></script>
+<script src="steps_scatter.js"></script>
 
 <script id="samples-data" type="application/json">
   {% include_relative samples.json %}
 </script>
+<script id="tests-data" type="application/json">
+  {% include_relative tests.json %}
+</script>
 <script>
   window.samples = JSON.parse(
     document.getElementById('samples-data').textContent
+  );
+  window.tests = JSON.parse(
+    document.getElementById('tests-data').textContent
   );
   window.samples_no_repeats = window.samples.slice(0, 30);
 </script>
@@ -174,5 +186,146 @@ title: Document
       // Render the table
       createBooleanTable(aimeParaphrasedTitles, aimeParaphrasedData, 'table-aime-paraphrased');
   </script>
+
+<p>Let's compare the accuracy differences statistically using McNemar's test. We'll compare the Base model against both the Paraphrased and Unparaphrased intervention results:</p>
+
+<!-- Flex container for side-by-side charts -->
+<!-- Use flex: 1 and min-width: 0 -->
+<div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 20px; margin-top: 20px; margin-bottom: 20px;">
+  <div id="mcnemar-viz-aime-para" style="flex: 1; min-width: 0;"></div>
+  <div id="mcnemar-viz-aime-unpara" style="flex: 1; min-width: 0;"></div>
+</div>
+
+<!-- Script for Base vs Paraphrased -->
+<script>
+    // --- Get Data from tests.json ---
+    const testsDataPara = window.tests; // tests.json is loaded into window.tests
+    const baseVsParaphrasedTest = testsDataPara?.base_vs_paraphrased;
+
+    if (baseVsParaphrasedTest) {
+        const contingencyTablePara = [
+            [baseVsParaphrasedTest.crosstab.n11, baseVsParaphrasedTest.crosstab.n10], // [[Base Correct, Para Correct], [Base Correct, Para Incorrect]]
+            [baseVsParaphrasedTest.crosstab.n01, baseVsParaphrasedTest.crosstab.n00]  // [[Base Incorrect, Para Correct], [Base Incorrect, Para Incorrect]]
+        ];
+        const statisticPara = baseVsParaphrasedTest.statistic; // The statistic from the exact test
+        const pValuePara = baseVsParaphrasedTest.pvalue;
+
+        if (typeof createMcNemarViz === 'function') {
+            createMcNemarViz(
+                contingencyTablePara,
+                statisticPara,
+                pValuePara,
+                'mcnemar-viz-aime-para', // Updated ID
+                "Base vs. Paraphrased", // Updated Title
+                "Correct",        // Condition 1 Label (Paraphrased) - Rows
+                "Incorrect",        // Condition 2 Label (Paraphrased) - Rows
+                "Base Model",       // Test 1 Name (Base) - Columns
+                "Paraphrased" // Test 2 Name (Paraphrased) - Rows
+            );
+        } else {
+            console.error("createMcNemarViz function not found for Paraphrased.");
+            const targetDiv = document.getElementById('mcnemar-viz-aime-para');
+            if(targetDiv) {
+                targetDiv.textContent = 'Error: Visualization function not loaded.';
+                targetDiv.style.color = '#C62828';
+            }
+        }
+    } else {
+        console.error("Could not find base_vs_paraphrased test data.");
+        const targetDiv = document.getElementById('mcnemar-viz-aime-para');
+        if(targetDiv) {
+                targetDiv.textContent = 'Error: McNemar test data not found.';
+                targetDiv.style.color = '#C62828';
+        }
+    }
+</script>
+
+<!-- Script for Base vs Unparaphrased -->
+<script>
+    // --- Get Data from tests.json ---
+    const testsDataUnpara = window.tests; // tests.json is loaded into window.tests
+    const baseVsUnparaphrasedTest = testsDataUnpara?.base_vs_unparaphrased;
+
+    if (baseVsUnparaphrasedTest) {
+        const contingencyTableUnpara = [
+            [baseVsUnparaphrasedTest.crosstab.n11, baseVsUnparaphrasedTest.crosstab.n10], // [[Base Correct, Unpara Correct], [Base Correct, Unpara Incorrect]]
+            [baseVsUnparaphrasedTest.crosstab.n01, baseVsUnparaphrasedTest.crosstab.n00]  // [[Base Incorrect, Unpara Correct], [Base Incorrect, Unpara Incorrect]]
+        ];
+        const statisticUnpara = baseVsUnparaphrasedTest.statistic; // The statistic from the exact test
+        const pValueUnpara = baseVsUnparaphrasedTest.pvalue;
+
+        if (typeof createMcNemarViz === 'function') {
+            createMcNemarViz(
+                contingencyTableUnpara,
+                statisticUnpara,
+                pValueUnpara,
+                'mcnemar-viz-aime-unpara', // New ID for this chart
+                "Base vs. Unparaphrased", // New Title
+                "Correct",          // Condition 1 Label (Unparaphrased) - Rows
+                "Incorrect",        // Condition 2 Label (Unparaphrased) - Rows
+                "Base Model",       // Test 1 Name (Base) - Columns
+                "Unparaphrased"     // Test 2 Name (Unparaphrased) - Rows
+            );
+        } else {
+            console.error("createMcNemarViz function not found for Unparaphrased.");
+            const targetDiv = document.getElementById('mcnemar-viz-aime-unpara');
+             if(targetDiv) {
+                targetDiv.textContent = 'Error: Visualization function not loaded.';
+                targetDiv.style.color = '#C62828';
+            }
+        }
+    } else {
+        console.error("Could not find base_vs_unparaphrased test data.");
+        const targetDiv = document.getElementById('mcnemar-viz-aime-unpara');
+        if(targetDiv) {
+            targetDiv.textContent = 'Error: McNemar test data not found.';
+            targetDiv.style.color = '#C62828';
+        }
+    }
+</script>
+
+<p>Now let's look at how the ratios of original phrasing to paraphrased phrasing look.</p>
+
+<div style="height: 500px; margin-bottom: 20px;"> <!-- Add a container div for sizing -->
+  <canvas id="reword-scatter-plot"></canvas>
+</div>
+
+<script>
+      createRewordScatterPlot(
+          ['paraphrased', 'concise'], // Intervention types to plot
+          window.samples_no_repeats,
+          'reword-scatter-plot'       // The ID of the canvas element
+      );
+</script>
+
+<p>We can also visualize the total length of the generated response for each question under different interventions:</p>
+
+<div style="height: 500px; margin-bottom: 20px;"> <!-- Container for sizing -->
+  <canvas id="response-length-scatter-plot"></canvas>
+</div>
+
+<script>
+      createResponseLengthScatterPlot(
+          ['base', 'paraphrased', 'concise'], // Example intervention types
+          window.samples_no_repeats,
+          'response-length-scatter-plot' // The ID of the new canvas element
+      );
+</script>
+
+<p>Finally, let's examine the number of reword steps taken during the generation process for each question:</p>
+
+<div style="height: 500px; margin-bottom: 20px;"> <!-- Container for sizing -->
+  <canvas id="steps-scatter-plot"></canvas>
+</div>
+
+<script>
+      // Call the new function
+      // Note: Exclude 'base' as it doesn't have rewordings
+      createStepsScatterPlot(
+          ['unparaphrased', 'paraphrased', 'concise'], // Types with rewordings
+          window.samples_no_repeats,
+          'steps-scatter-plot' // The ID of the new canvas element
+      );
+</script>
 
 </div>

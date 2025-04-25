@@ -1,0 +1,35 @@
+{
+    "base_vs_unparaphrased": {
+        "crosstab": {
+            "n00": 15,
+            "n01": 3,
+            "n10": 10,
+            "n11": 62
+        },
+        "statistic": 3.0,
+        "pvalue": 0.09228515625,
+        "exact": false
+    },
+    "base_vs_paraphrased": {
+        "crosstab": {
+            "n00": 16,
+            "n01": 2,
+            "n10": 17,
+            "n11": 55
+        },
+        "statistic": 2.0,
+        "pvalue": 0.000728607177734375,
+        "exact": false
+    },
+    "base_vs_concise": {
+        "crosstab": {
+            "n00": 16,
+            "n01": 2,
+            "n10": 17,
+            "n11": 55
+        },
+        "statistic": 2.0,
+        "pvalue": 0.000728607177734375,
+        "exact": false
+    }
+}
