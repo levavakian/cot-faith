@@ -352,7 +352,7 @@ def generate_results(dataset, name):
     save_data(unparaphrased_responses, f'{name}_unparaphrased_responses')
     save_data(unreworded_pairs, f'{name}_unreworded_pairs')
 
-    return base_responses, hidden_cot_responses, no_cot_responses, paraphrased_responses, reworded_pairs, concise_responses, concise_reworded_pairs, unparaphrased_responses, unreworded_pairs
+    return base_responses, hidden_cot_responses, no_cot_responses, paraphrased_responses, reworded_pairs, concise_responses, concise_reworded_pairs, unparaphrased_responses, unreworded_pairs, no_nl_responses, no_nl_reworded_pairs
 
 def calculate_arithmetic_accuracy(responses, answers, percent_epsilon=.01, print_diff=False):
     correct = 0
@@ -422,6 +422,7 @@ def populate_datastore(datastore, samples, rewordings, results, answers, name):
     datastore[name]["concise"] = {}
     datastore[name]["hidden"] = {}
     datastore[name]["no"] = {}
+    datastore[name]["no_nl"] = {}
 
     datastore[name]["base"]["responses"] = samples[0]
     datastore[name]["base"]["results"] = results[0][1]
@@ -435,11 +436,13 @@ def populate_datastore(datastore, samples, rewordings, results, answers, name):
     datastore[name]["hidden"]["results"] = results[4][1]
     datastore[name]["no"]["responses"] = samples[5]
     datastore[name]["no"]["results"] = results[5][1]
+    datastore[name]["no_nl"]["responses"] = samples[6]
+    datastore[name]["no_nl"]["results"] = results[6][1]
 
     datastore[name]["unparaphrased"]["rewordings"] = rewordings[0]
     datastore[name]["paraphrased"]["rewordings"] = rewordings[1]
     datastore[name]["concise"]["rewordings"] = rewordings[2]
-
+    datastore[name]["no_nl"]["rewordings"] = rewordings[3]
 def arithmetic(suffix=""):
     random.seed(87)
     samples = gen_dataset(num_samples=30, options=[1])
@@ -473,9 +476,10 @@ def arithmetic(suffix=""):
         calculate_arithmetic_accuracy(concise_responses, answers, print_diff=False),
         calculate_arithmetic_accuracy(hidden_cot_responses, answers, print_diff=False),
         calculate_arithmetic_accuracy(no_cot_responses, answers, print_diff=False),
+        calculate_arithmetic_accuracy(no_nl_responses, answers, print_diff=False),
     ]
     populate_datastore(datastore["arithmetic"], samples, rewordings, results, answers, f"arithmetic{suffix}")
-    titles = ["Base", "Unparaphrased CoT", "Paraphrased CoT", "Concise CoT", "Hidden CoT", "No CoT"]
+    titles = ["Base", "Unparaphrased CoT", "Paraphrased CoT", "Concise CoT", "Hidden CoT", "No CoT", "No NL"]
     print(f'######## Arithmetic{suffix} ########')
     print(format_accuracy_comparison(results, titles))
     print(f'#### End of Arithmetic{suffix} #####')
@@ -483,7 +487,9 @@ def arithmetic(suffix=""):
 def aime(suffix=""):
     ds = load_dataset("HuggingFaceH4/aime_2024")
     answers = [clean_aime_answer(answer) for answer in ds["train"]["answer"]]
-    base_responses, hidden_cot_responses, no_cot_responses, paraphrased_responses, reworded_pairs, concise_responses, concise_reworded_pairs, unparaphrased_responses, unreworded_pairs = generate_results(ds["train"], f"aime{suffix}")
+    base_responses, hidden_cot_responses, no_cot_responses, paraphrased_responses, reworded_pairs, \
+        concise_responses, concise_reworded_pairs, unparaphrased_responses, unreworded_pairs, \
+        no_nl_responses, no_nl_reworded_pairs = generate_results(ds["train"], f"aime{suffix}")
 
     results = [
         calculate_aime_accuracy(base_responses, ds["train"]["answer"], print_diff=False),
@@ -492,11 +498,13 @@ def aime(suffix=""):
         calculate_aime_accuracy(concise_responses, ds["train"]["answer"], print_diff=False),
         calculate_aime_accuracy(hidden_cot_responses, ds["train"]["answer"], print_diff=False),
         calculate_aime_accuracy(no_cot_responses, ds["train"]["answer"], print_diff=False),
+        calculate_aime_accuracy(no_nl_responses, ds["train"]["answer"], print_diff=False),
     ]
     rewordings = [
         unreworded_pairs,
         reworded_pairs,
         concise_reworded_pairs,
+        no_nl_reworded_pairs,
     ]
 
     samples = [
@@ -506,9 +514,10 @@ def aime(suffix=""):
         concise_responses,
         hidden_cot_responses,
         no_cot_responses,
+        no_nl_responses,
     ]
     populate_datastore(datastore["aime"], samples, rewordings, results, answers, f"aime{suffix}")
-    titles = ["Base", "Unparaphrased CoT", "Paraphrased CoT", "Concise CoT", "Hidden CoT", "No CoT"]
+    titles = ["Base", "Unparaphrased CoT", "Paraphrased CoT", "Concise CoT", "Hidden CoT", "No CoT", "No NL"]
     print(f'############ AIME{suffix} ############')
     print(format_accuracy_comparison(results, titles))
     print(f'######## End of AIME{suffix} #########')

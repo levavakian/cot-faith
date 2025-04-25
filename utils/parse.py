@@ -27,7 +27,11 @@ def find_last_boxed(text):
     return None  # Unmatched braces
 
 def find_string_between(left, right, input):
-    return input[input.rfind(left)+len(left):input.rfind(right)]
+    left_index = input.rfind(left)
+    right_index = input.rfind(right)
+    if left_index == -1 or right_index == -1:
+        return None
+    return input[left_index+len(left):right_index]
 
 def extract_reasoning(text):
     """

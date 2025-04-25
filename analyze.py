@@ -50,26 +50,29 @@ class Tests:
         self.mc_base_vs_unparaphrased = McNemar()
         self.mc_base_vs_paraphrased = McNemar()
         self.mc_base_vs_concise = McNemar()
+        self.mc_base_vs_no_nl = McNemar()
 
         self.wx_base_vs_unparaphrased_len = Wilcoxon()
         self.wx_base_vs_paraphrased_len = Wilcoxon()
         self.wx_base_vs_concise_len = Wilcoxon()
+        self.wx_base_vs_no_nl_len = Wilcoxon()
 
         self.wx_unparaphrased_vs_paraphrased_steps = Wilcoxon()
         self.wx_unparaphrased_vs_concise_steps = Wilcoxon()
-
+        self.wx_unparaphrased_vs_no_nl_steps = Wilcoxon()
 
     def to_json(self):
         return {
             "mc_base_vs_unparaphrased": self.mc_base_vs_unparaphrased.to_json(),
             "mc_base_vs_paraphrased": self.mc_base_vs_paraphrased.to_json(),
-            "mc_base_vs_concise": self.mc_base_vs_concise.to_json()
+            "mc_base_vs_concise": self.mc_base_vs_concise.to_json(),
+            "mc_base_vs_no_nl": self.mc_base_vs_no_nl.to_json()
         }
     
     def __str__(self):
-        out = f"Base vs Unparaphrased: {self.mc_base_vs_unparaphrased}\nBase vs Paraphrased: {self.mc_base_vs_paraphrased}\nBase vs Concise: {self.mc_base_vs_concise}"
-        out += f"\n\nBase vs Unparaphrased Length: {self.wx_base_vs_unparaphrased_len}\nBase vs Paraphrased Length: {self.wx_base_vs_paraphrased_len}\nBase vs Concise Length: {self.wx_base_vs_concise_len}"
-        out += f"\n\nUnparaphrased vs Paraphrased Steps: {self.wx_unparaphrased_vs_paraphrased_steps}\nUnparaphrased vs Concise Steps: {self.wx_unparaphrased_vs_concise_steps}"
+        out = f"Base vs Unparaphrased: {self.mc_base_vs_unparaphrased}\nBase vs Paraphrased: {self.mc_base_vs_paraphrased}\nBase vs Concise: {self.mc_base_vs_concise}\nBase vs No NL: {self.mc_base_vs_no_nl}"
+        out += f"\n\nBase vs Unparaphrased Length: {self.wx_base_vs_unparaphrased_len}\nBase vs Paraphrased Length: {self.wx_base_vs_paraphrased_len}\nBase vs Concise Length: {self.wx_base_vs_concise_len}\nBase vs No NL Length: {self.wx_base_vs_no_nl_len} "
+        out += f"\n\nUnparaphrased vs Paraphrased Steps: {self.wx_unparaphrased_vs_paraphrased_steps}\nUnparaphrased vs Concise Steps: {self.wx_unparaphrased_vs_concise_steps}\nUnparaphrased vs No NL Steps: {self.wx_unparaphrased_vs_no_nl_steps}"
         return out
 
 class Summary:
@@ -140,19 +143,20 @@ class Sample:
         self.paraphrased = Completion()
         self.unparaphrased = Completion()
         self.concise = Completion()
-    
+        self.no_nl = Completion()
     def generate_summary(self):
         self.base.generate_summary()
         self.paraphrased.generate_summary()
         self.unparaphrased.generate_summary()
         self.concise.generate_summary()
-    
+        self.no_nl.generate_summary()
     def to_json(self):
         return {
             "base": self.base.to_json(),
             "paraphrased": self.paraphrased.to_json(),
             "unparaphrased": self.unparaphrased.to_json(),
-            "concise": self.concise.to_json()
+            "concise": self.concise.to_json(),
+            "no_nl": self.no_nl.to_json()
         }
     
     def __str__(self):
@@ -184,6 +188,7 @@ for key, _ in datastore["aime"].items():
         sample.paraphrased = to_completion(data["paraphrased"]["responses"][i], data["answers"][i], data["paraphrased"]["rewordings"][i])
         sample.unparaphrased = to_completion(data["unparaphrased"]["responses"][i], data["answers"][i], data["unparaphrased"]["rewordings"][i])
         sample.concise = to_completion(data["concise"]["responses"][i], data["answers"][i], data["concise"]["rewordings"][i])
+        sample.no_nl = to_completion(data["no_nl"]["responses"][i], data["answers"][i], data["no_nl"]["rewordings"][i])
         sample.generate_summary()
         samples.append(sample)
 
@@ -194,14 +199,17 @@ base_correct = [s.base.answer == s.base.ground_truth for s in samples]
 unparaphrased_correct = [s.unparaphrased.answer == s.unparaphrased.ground_truth for s in samples]
 paraphrased_correct = [s.paraphrased.answer == s.paraphrased.ground_truth for s in samples]
 concise_correct = [s.concise.answer == s.concise.ground_truth for s in samples]
+no_nl_correct = [s.no_nl.answer == s.no_nl.ground_truth for s in samples]
 
 base_vs_unparaphrased = crosstab(base_correct, unparaphrased_correct, levels=([False, True], [False, True])).count
 base_vs_paraphrased = crosstab(base_correct, paraphrased_correct, levels=([False, True], [False, True])).count
 base_vs_concise = crosstab(base_correct, concise_correct, levels=([False, True], [False, True])).count
+base_vs_no_nl = crosstab(base_correct, no_nl_correct, levels=([False, True], [False, True])).count
 
 mc_unparaphrased = mcnemar(base_vs_unparaphrased, exact=True)
 mc_paraphrased = mcnemar(base_vs_paraphrased, exact=True)
 mc_concise = mcnemar(base_vs_concise, exact=True)
+mc_no_nl = mcnemar(base_vs_no_nl, exact=True)
 
 tests.mc_base_vs_unparaphrased.crosstab = base_vs_unparaphrased
 tests.mc_base_vs_unparaphrased.statistic = mc_unparaphrased.statistic
@@ -215,12 +223,17 @@ tests.mc_base_vs_concise.crosstab = base_vs_concise
 tests.mc_base_vs_concise.statistic = mc_concise.statistic
 tests.mc_base_vs_concise.pvalue = mc_concise.pvalue
 
+tests.mc_base_vs_no_nl.crosstab = base_vs_no_nl
+tests.mc_base_vs_no_nl.statistic = mc_no_nl.statistic
+tests.mc_base_vs_no_nl.pvalue = mc_no_nl.pvalue
+
 # Wilcoxon test for length
 
 base_lengths = [len(s.base.output) for s in samples]
 unparaphrased_lengths = [len(s.unparaphrased.output) for s in samples]
 paraphrased_lengths = [len(s.paraphrased.output) for s in samples]
 concise_lengths = [len(s.concise.output) for s in samples]
+no_nl_lengths = [len(s.no_nl.output) for s in samples]
 
 # Base vs Unparaphrased Length
 wx_unparaphrased_len = wilcoxon(base_lengths, unparaphrased_lengths)
@@ -237,12 +250,16 @@ wx_concise_len = wilcoxon(base_lengths, concise_lengths)
 tests.wx_base_vs_concise_len.statistic = wx_concise_len.statistic
 tests.wx_base_vs_concise_len.pvalue = wx_concise_len.pvalue
 
+# Base vs No NL Length
+wx_no_nl_len = wilcoxon(base_lengths, no_nl_lengths)
+tests.wx_base_vs_no_nl_len.statistic = wx_no_nl_len.statistic
+tests.wx_base_vs_no_nl_len.pvalue = wx_no_nl_len.pvalue
 
 # Wicoxon test for number of steps
 unparaphrased_steps = [s.unparaphrased.summary.reword_steps if s.unparaphrased.summary else 0 for s in samples]
 paraphrased_steps = [s.paraphrased.summary.reword_steps if s.paraphrased.summary else 0 for s in samples]
 concise_steps = [s.concise.summary.reword_steps if s.concise.summary else 0 for s in samples]
-
+no_nl_steps = [s.no_nl.summary.reword_steps if s.no_nl.summary else 0 for s in samples]
 # Unparaphrased vs Paraphrased Steps
 wx_unp_vs_par_steps = wilcoxon(unparaphrased_steps, paraphrased_steps)
 tests.wx_unparaphrased_vs_paraphrased_steps.statistic = wx_unp_vs_par_steps.statistic
@@ -253,35 +270,10 @@ wx_unp_vs_con_steps = wilcoxon(unparaphrased_steps, concise_steps)
 tests.wx_unparaphrased_vs_concise_steps.statistic = wx_unp_vs_con_steps.statistic
 tests.wx_unparaphrased_vs_concise_steps.pvalue = wx_unp_vs_con_steps.pvalue
 
-
-# 1. Average difference between paraphrased and original rewordings (per step)
-all_paraphrased_reword_diffs = []
-for s in samples:
-    # Check if paraphrased run exists and has summary with reword_diffs
-    for r in s.paraphrased.rewordings:
-        all_paraphrased_reword_diffs.append(len(r[1]) - len(r[0]))
-
-# Calculate the mean, handling the case of an empty list
-print("reword para diffs mean ", np.mean(all_paraphrased_reword_diffs) if all_paraphrased_reword_diffs else 0.0)
-
-# 2. Average difference of the paraphrased total length vs the base total length
-# Reuse existing lists: base_lengths, paraphrased_lengths
-if len(paraphrased_lengths) == len(unparaphrased_lengths):
-    len_diffs_para_vs_unpara = [p - b for p, b in zip(paraphrased_lengths, unparaphrased_lengths)]
-    print("total len diffs para vs unpara mean ", np.mean(len_diffs_para_vs_unpara) if len_diffs_para_vs_unpara else 0.0)
-else:
-    # Handle potential length mismatch if some samples lack base or paraphrased results
-    print("Warning: Length mismatch between base and paraphrased lengths. Cannot calculate average difference.")
-
-# 3. Average difference of the total number of steps in the paraphrased vs unparaphrased methods
-# Reuse existing lists: paraphrased_steps, unparaphrased_steps
-if len(paraphrased_steps) == len(unparaphrased_steps):
-    step_diffs_para_vs_unp = [p - u for p, u in zip(paraphrased_steps, unparaphrased_steps)]
-    print("Steps diff mean para vs unpara ", np.mean(step_diffs_para_vs_unp) if step_diffs_para_vs_unp else 0.0)
-else:
-    # Handle potential length mismatch
-    print("Warning: Length mismatch between paraphrased and unparaphrased steps. Cannot calculate average difference.")
-
+# Unparaphrased vs No NL Steps
+wx_unp_vs_no_nl_steps = wilcoxon(unparaphrased_steps, no_nl_steps)
+tests.wx_unparaphrased_vs_no_nl_steps.statistic = wx_unp_vs_no_nl_steps.statistic
+tests.wx_unparaphrased_vs_no_nl_steps.pvalue = wx_unp_vs_no_nl_steps.pvalue
 
 print(tests)
 

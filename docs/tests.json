@@ -1,35 +1,35 @@
 {
     "mc_base_vs_unparaphrased": {
         "crosstab": {
-            "n00": 15,
-            "n01": 3,
-            "n10": 10,
-            "n11": 62
+            "n00": 5,
+            "n01": 1,
+            "n10": 2,
+            "n11": 22
         },
-        "statistic": 3.0,
-        "pvalue": 0.09228515625,
+        "statistic": 1.0,
+        "pvalue": 1.0,
         "exact": false
     },
     "mc_base_vs_paraphrased": {
         "crosstab": {
-            "n00": 16,
-            "n01": 2,
-            "n10": 17,
-            "n11": 55
+            "n00": 5,
+            "n01": 1,
+            "n10": 8,
+            "n11": 16
         },
-        "statistic": 2.0,
-        "pvalue": 0.000728607177734375,
+        "statistic": 1.0,
+        "pvalue": 0.0390625,
         "exact": false
     },
     "mc_base_vs_concise": {
         "crosstab": {
-            "n00": 16,
-            "n01": 2,
-            "n10": 17,
-            "n11": 55
+            "n00": 6,
+            "n01": 0,
+            "n10": 6,
+            "n11": 18
         },
-        "statistic": 2.0,
-        "pvalue": 0.000728607177734375,
+        "statistic": 0.0,
+        "pvalue": 0.03125,
         "exact": false
     }
 }
