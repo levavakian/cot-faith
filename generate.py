@@ -100,7 +100,7 @@ def get_paraphrased_chunk(content, keep_original=False, concise=False, no_nl=Fal
     if '</think>' in content:
         done_thinking = True
         content = content[:content.rfind('</think>')]
-    if '<｜end▁of▁thinking｜>' in content:
+    elif '<｜end▁of▁thinking｜>' in content:
         done_thinking = True
         content = content[:content.rfind('<｜end▁of▁thinking｜>')]
     
@@ -117,6 +117,8 @@ def get_paraphrased_chunk(content, keep_original=False, concise=False, no_nl=Fal
         ret = content
 
     return ret, done_thinking, (content, chunk)
+
+get_paraphrased_chunk("\n</think>")
 
 def get_paraphrased_response(prompt, sys_prompt_extra="", prefill="<think>\n", max_non_thinking_tokens=100, max_retries=10, keep_original=False, concise=False, no_nl=False):
     cprint(f'{"Unparaphrased" if keep_original else "Paraphrased"} querying with sys prompt extra: {sys_prompt_extra[:50]}...\n and prefill: {prefill[:50]}...\n and prompt: {prompt[:50]}...')

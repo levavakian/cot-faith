@@ -104,7 +104,7 @@ title: Document
       createBooleanTable(basepara, basepara_data, 'table-2');
   </script>
 
-  <p>That's a pretty good sign! In the original paper, Antrhopic included a version with the CoT replaced by a placeholder, and another that was "hidden" by replacing every char with a · in the CoT. After all, if the model can get the answer right even with its eyes closed, we haven't found out much that's new about how it is using the CoT.<p>
+  <p>That's a pretty good sign! In the original paper, Antrhopic included a version with the CoT replaced by a placeholder, and another that was "hidden" by replacing every char with a · in the CoT. After all, if the model can get the answer right even with its eyes closed, we haven't found out much that's new about how it is using the CoT.</p>
 
   <p>So, what does it look like if we include the versions with the removed CoTs?</p>
 
@@ -120,7 +120,7 @@ title: Document
       createBooleanTable(arithmetic_res, arithmetic_data, 'table-3');
   </script>
 
-  <p>Even without a CoT, around 50% to 60% of the time Deepseek will get the answer right. Still, the CoT is clearly required to get 100% correctness, and paraphrasing it does not seem to destroy any utility. It may still be that Deepseek uses <i>some</i> steganography -- maybe in the order of what calculation it decides to do next or in the variable names it chooses, but it looks unlikely that it is hiding information in things like the positions of periods or newlines.</p>
+  <p>Even without a CoT, around 50% to 60% of the time Deepseek will get the answer right. Still, the CoT is clearly required to get 100% correctness, and paraphrasing it does not seem to destroy any utility. It may still be that Deepseek uses <i>some</i> steganography -- maybe in the order of what calculation it decides to do next or in the variable names it chooses, but it looks unlikely that it is hiding information in things like the positions of periods and newlines, or encoding thought in hyper specific wording.</p>
 
   <p>But how sure are we?</p>
 
@@ -128,7 +128,9 @@ title: Document
 
   <p>How about on harder problems? Pure reinforcement learning, when left to its own devices, will produce a CoT that's a jumble of languages and formats. Not very readable, unless you use extra rewards to <a href="https://arxiv.org/pdf/2501.12948">stuff all that reasoning back</a> into a human presentable shape. The most efficient CoT for solving hard problems doesn't necessarily align with the most human friendly CoT. Maybe, we'll see a different behavior with higher difficulties.</p>
 
-  <p>Thankfully, we don't have to think of the problems and answers ourselves. Thirty questions from the AIME2024 dataset are available for us, complete with ground truth answers. 
+  <p>Thankfully, we don't have to think of the problems and answers ourselves. Thirty questions from the AIME2024 dataset are available for us, complete with ground truth answers.</p>
+
+  <p>Here we can see what the regular, base responses look like:</p>
 
   <div id="prompt-widget"></div>  
   <script>
@@ -138,4 +140,39 @@ title: Document
     const finalAnswers = window.samples_no_repeats.map(s => s.base.answer);
     createPromptWidget(prompts, responses, givenAnswers, finalAnswers, 'prompt-widget');
   </script>
+
+  <p>And here are its total scores:</p>
+
+  <div id="table-aime-base"></div>
+  <script>
+      const aimeBaseAccuracy = window.samples_no_repeats.map(sample =>
+          sample.base.answer === sample.base.ground_truth
+      );
+
+      // Prepare data for the table function
+      const aimeBaseTitles = ["Base"];
+      const aimeBaseData = [aimeBaseAccuracy]; // Wrap the single array
+
+      // Render the table
+      createBooleanTable(aimeBaseTitles, aimeBaseData, 'table-aime-base');
+  </script>
+
+  <p>Pretty good! And in line with published baselines for pass@1. Okay, now what about the paraphrased version?</p>
+
+  <div id="table-aime-paraphrased"></div>
+  <script>
+      // Extract paraphrased accuracy data from samples_no_repeats
+      const aimeParaphrasedAccuracy = window.samples_no_repeats.map(sample =>
+          // Need to handle cases where paraphrased might not exist or have an answer
+          (sample.paraphrased && sample.paraphrased.answer === sample.paraphrased.ground_truth)
+      );
+
+      // Prepare data for the table function
+      const aimeParaphrasedTitles = ["Paraphrased"];
+      const aimeParaphrasedData = [aimeParaphrasedAccuracy]; // Wrap the single array
+
+      // Render the table
+      createBooleanTable(aimeParaphrasedTitles, aimeParaphrasedData, 'table-aime-paraphrased');
+  </script>
+
 </div>

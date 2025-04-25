@@ -86,7 +86,7 @@ function createPromptWidget(prompts, responses, givenAnswers, finalAnswers, cont
     respDiv.textContent = responses[idx];
     ansDiv.innerHTML = 
       `<strong style="color:#5a4a3f">Given answer:</strong> ${givenAnswers[idx]}<br>` +
-      `<strong style="color:#5a4a3f">Final answer:</strong> ${finalAnswers[idx]}`;
+      `<strong style="color:#5a4a3f">Ground truth:</strong> ${finalAnswers[idx]}`;
   }
   select.addEventListener('change', updateView);
 

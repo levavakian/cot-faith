@@ -1,5 +1,6 @@
 /**
- * Creates a styled HTML table displaying boolean data as checkmarks and crosses.
+ * Creates a styled HTML table displaying boolean data as checkmarks and crosses,
+ * including a column showing the percentage of true values for each row.
  *
  * @param {string[]} titles - An array of strings for the row headers (left column).
  * @param {boolean[][]} dataArrays - An array of arrays. Each inner array corresponds
@@ -84,6 +85,24 @@ function createBooleanTable(titles, dataArrays, containerId) {
    });
   headerRow.appendChild(thCorner);
 
+  // --- NEW: Header for Percentage Column ---
+  const thPercent = document.createElement('th');
+  thPercent.textContent = '% Correct'; // Or 'Accuracy', 'Score', etc.
+  Object.assign(thPercent.style, {
+      border: '1px solid #d2c4a9',
+      borderTopStyle: 'solid',
+      borderBottomStyle: 'solid',
+      borderLeftStyle: 'none', // No left border
+      borderRightStyle: 'solid',
+      padding: '8px 12px',
+      textAlign: 'center',
+      backgroundColor: '#EADDCA',
+      color: '#5a4a3f',
+      fontWeight: 'bold', // Make percentage header bold
+      minWidth: '70px' // Give it some space
+  });
+  headerRow.appendChild(thPercent);
+
   // Column number headers (1 to N)
   for (let j = 0; j < numCols; j++) {
     const th = document.createElement('th');
@@ -92,7 +111,7 @@ function createBooleanTable(titles, dataArrays, containerId) {
         border: '1px solid #d2c4a9',
         borderTopStyle: 'solid', // Ensure top border is visible
         borderBottomStyle: 'solid',
-        borderLeftStyle: j === 0 ? 'solid' : 'none', // Handle left border only for first data column header
+        borderLeftStyle: 'none', // Changed: No left border for number headers either
         borderRightStyle: 'solid',
         padding: '8px 12px',
         textAlign: 'center',
@@ -113,6 +132,12 @@ function createBooleanTable(titles, dataArrays, containerId) {
   titles.forEach((title, i) => {
     const row = tbody.insertRow();
     const isLastRow = (i === titles.length - 1);
+    const dataRow = dataArrays[i]; // Get the data for this row
+
+    // --- Calculate Percentage ---
+    const numTrue = dataRow.filter(val => val === true).length;
+    const percentage = numCols > 0 ? (numTrue / numCols) * 100 : 0;
+    const formattedPercent = percentage.toFixed(1) + '%'; // Format to one decimal place
 
     // Row Header (Title)
     const thTitle = document.createElement('th');
@@ -136,8 +161,29 @@ function createBooleanTable(titles, dataArrays, containerId) {
     }
     row.appendChild(thTitle);
 
+    // --- NEW: Percentage Cell ---
+    const tdPercent = row.insertCell();
+    tdPercent.textContent = formattedPercent;
+    Object.assign(tdPercent.style, {
+        border: '1px solid #d2c4a9',
+        borderTopStyle: 'none',
+        borderBottomStyle: 'solid',
+        borderLeftStyle: 'none', // No left border
+        borderRightStyle: 'solid',
+        padding: '8px 12px',
+        textAlign: 'center', // Center the percentage
+        color: '#5a4a3f', // Use header text color for emphasis
+        fontWeight: 'normal' // Or 'bold' if preferred
+    });
+     // Apply bottom radius if it's the last row (before checkmarks start)
+     if (isLastRow) {
+        // Note: This assumes the percentage column is NOT the very last column.
+        // If checkmarks could be empty, radius logic might need adjustment.
+        // tdPercent.style.borderBottomRightRadius = '0'; // Ensure it doesn't get radius
+     }
+
     // Data Cells (Checkmarks/Crosses)
-    dataArrays[i].forEach((value, j) => {
+    dataRow.forEach((value, j) => {
       const cell = row.insertCell();
       cell.textContent = value ? '✅' : '❌';
       Object.assign(cell.style, {
