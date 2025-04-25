@@ -253,6 +253,36 @@ wx_unp_vs_con_steps = wilcoxon(unparaphrased_steps, concise_steps)
 tests.wx_unparaphrased_vs_concise_steps.statistic = wx_unp_vs_con_steps.statistic
 tests.wx_unparaphrased_vs_concise_steps.pvalue = wx_unp_vs_con_steps.pvalue
 
+
+# 1. Average difference between paraphrased and original rewordings (per step)
+all_paraphrased_reword_diffs = []
+for s in samples:
+    # Check if paraphrased run exists and has summary with reword_diffs
+    for r in s.paraphrased.rewordings:
+        all_paraphrased_reword_diffs.append(len(r[1]) - len(r[0]))
+
+# Calculate the mean, handling the case of an empty list
+print("reword para diffs mean ", np.mean(all_paraphrased_reword_diffs) if all_paraphrased_reword_diffs else 0.0)
+
+# 2. Average difference of the paraphrased total length vs the base total length
+# Reuse existing lists: base_lengths, paraphrased_lengths
+if len(paraphrased_lengths) == len(unparaphrased_lengths):
+    len_diffs_para_vs_unpara = [p - b for p, b in zip(paraphrased_lengths, unparaphrased_lengths)]
+    print("total len diffs para vs unpara mean ", np.mean(len_diffs_para_vs_unpara) if len_diffs_para_vs_unpara else 0.0)
+else:
+    # Handle potential length mismatch if some samples lack base or paraphrased results
+    print("Warning: Length mismatch between base and paraphrased lengths. Cannot calculate average difference.")
+
+# 3. Average difference of the total number of steps in the paraphrased vs unparaphrased methods
+# Reuse existing lists: paraphrased_steps, unparaphrased_steps
+if len(paraphrased_steps) == len(unparaphrased_steps):
+    step_diffs_para_vs_unp = [p - u for p, u in zip(paraphrased_steps, unparaphrased_steps)]
+    print("Steps diff mean para vs unpara ", np.mean(step_diffs_para_vs_unp) if step_diffs_para_vs_unp else 0.0)
+else:
+    # Handle potential length mismatch
+    print("Warning: Length mismatch between paraphrased and unparaphrased steps. Cannot calculate average difference.")
+
+
 print(tests)
 
 with open('docs/samples.json', 'w') as f:

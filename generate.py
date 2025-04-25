@@ -519,14 +519,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
     checkpointer.handle_checkpoint_clear_args(args)
 
-    # datastore["aime"] = {}
+    datastore["aime"] = {}
     aime()
-    aime("_2")
-    aime("_3")
+    # aime("_2")
+    # aime("_3")
 
     # datastore["arithmetic"] = {}
     # arithmetic()
     # # arithmetic("_2")
     # # arithmetic("_3")
 
-    # save_data(datastore, "datastore", cache_dir="docs")
+    save_data(datastore, "datastore", cache_dir="docs")
