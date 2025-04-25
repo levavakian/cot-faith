@@ -3,14 +3,15 @@ import numpy as np
 from utils.parse import find_last_boxed
 from statsmodels.stats.contingency_tables import mcnemar
 from scipy.stats.contingency import crosstab
+from scipy.stats import wilcoxon 
 
-class Test:
+class McNemar:
     def __init__(self):
         self.crosstab = None
         self.statistic = 0
         self.pvalue = 0
         self.exact = False
-    
+
     def crosstab_to_json(self):
         return {
             "n00": int(self.crosstab[0][0]),
@@ -26,26 +27,50 @@ class Test:
             "pvalue": float(self.pvalue),
             "exact": bool(self.exact)
         }
-    
+
     def __str__(self):
         return f"Statistic: {self.statistic}, P-value: {self.pvalue}, Exact: {self.exact}"
-        
 
-class Tests:
+class Wilcoxon:
     def __init__(self):
-        self.base_vs_unparaphrased = Test()
-        self.base_vs_paraphrased = Test()
-        self.base_vs_concise = Test()
+        self.statistic = 0
+        self.pvalue = 0
     
     def to_json(self):
         return {
-            "base_vs_unparaphrased": self.base_vs_unparaphrased.to_json(),
-            "base_vs_paraphrased": self.base_vs_paraphrased.to_json(),
-            "base_vs_concise": self.base_vs_concise.to_json()
+            "statistic": float(self.statistic),
+            "pvalue": float(self.pvalue)
         }
     
     def __str__(self):
-        return f"Base vs Unparaphrased: {self.base_vs_unparaphrased}\nBase vs Paraphrased: {self.base_vs_paraphrased}\nBase vs Concise: {self.base_vs_concise}"
+        return f"Statistic: {self.statistic}, P-value: {self.pvalue}"
+
+class Tests:
+    def __init__(self):
+        self.mc_base_vs_unparaphrased = McNemar()
+        self.mc_base_vs_paraphrased = McNemar()
+        self.mc_base_vs_concise = McNemar()
+
+        self.wx_base_vs_unparaphrased_len = Wilcoxon()
+        self.wx_base_vs_paraphrased_len = Wilcoxon()
+        self.wx_base_vs_concise_len = Wilcoxon()
+
+        self.wx_unparaphrased_vs_paraphrased_steps = Wilcoxon()
+        self.wx_unparaphrased_vs_concise_steps = Wilcoxon()
+
+
+    def to_json(self):
+        return {
+            "mc_base_vs_unparaphrased": self.mc_base_vs_unparaphrased.to_json(),
+            "mc_base_vs_paraphrased": self.mc_base_vs_paraphrased.to_json(),
+            "mc_base_vs_concise": self.mc_base_vs_concise.to_json()
+        }
+    
+    def __str__(self):
+        out = f"Base vs Unparaphrased: {self.mc_base_vs_unparaphrased}\nBase vs Paraphrased: {self.mc_base_vs_paraphrased}\nBase vs Concise: {self.mc_base_vs_concise}"
+        out += f"\n\nBase vs Unparaphrased Length: {self.wx_base_vs_unparaphrased_len}\nBase vs Paraphrased Length: {self.wx_base_vs_paraphrased_len}\nBase vs Concise Length: {self.wx_base_vs_concise_len}"
+        out += f"\n\nUnparaphrased vs Paraphrased Steps: {self.wx_unparaphrased_vs_paraphrased_steps}\nUnparaphrased vs Concise Steps: {self.wx_unparaphrased_vs_concise_steps}"
+        return out
 
 class Summary:
     def __init__(self):
@@ -162,6 +187,9 @@ for key, _ in datastore["aime"].items():
         sample.generate_summary()
         samples.append(sample)
 
+tests = Tests()
+
+# McNemar tests for accuracy
 base_correct = [s.base.answer == s.base.ground_truth for s in samples]
 unparaphrased_correct = [s.unparaphrased.answer == s.unparaphrased.ground_truth for s in samples]
 paraphrased_correct = [s.paraphrased.answer == s.paraphrased.ground_truth for s in samples]
@@ -172,29 +200,60 @@ base_vs_paraphrased = crosstab(base_correct, paraphrased_correct, levels=([False
 base_vs_concise = crosstab(base_correct, concise_correct, levels=([False, True], [False, True])).count
 
 mc_unparaphrased = mcnemar(base_vs_unparaphrased, exact=True)
-print(f"Base vs Unparaphrased: McNemar exact={mc_unparaphrased.statistic:.2f}, p={mc_unparaphrased.pvalue:.4f}")
-
 mc_paraphrased = mcnemar(base_vs_paraphrased, exact=True)
-print(f"Base vs Paraphrased: McNemar exact={mc_paraphrased.statistic:.2f}, p={mc_paraphrased.pvalue:.4f}")
-
 mc_concise = mcnemar(base_vs_concise, exact=True)
-print(f"Base vs Concise: McNemar exact={mc_concise.statistic:.2f}, p={mc_concise.pvalue:.4f}")
 
-tests = Tests()
-tests.base_vs_unparaphrased = Test()
-tests.base_vs_unparaphrased.crosstab = base_vs_unparaphrased
-tests.base_vs_unparaphrased.statistic = mc_unparaphrased.statistic
-tests.base_vs_unparaphrased.pvalue = mc_unparaphrased.pvalue
+tests.mc_base_vs_unparaphrased.crosstab = base_vs_unparaphrased
+tests.mc_base_vs_unparaphrased.statistic = mc_unparaphrased.statistic
+tests.mc_base_vs_unparaphrased.pvalue = mc_unparaphrased.pvalue
 
-tests.base_vs_paraphrased = Test()
-tests.base_vs_paraphrased.crosstab = base_vs_paraphrased
-tests.base_vs_paraphrased.statistic = mc_paraphrased.statistic
-tests.base_vs_paraphrased.pvalue = mc_paraphrased.pvalue
+tests.mc_base_vs_paraphrased.crosstab = base_vs_paraphrased
+tests.mc_base_vs_paraphrased.statistic = mc_paraphrased.statistic
+tests.mc_base_vs_paraphrased.pvalue = mc_paraphrased.pvalue
 
-tests.base_vs_concise = Test()
-tests.base_vs_concise.crosstab = base_vs_concise
-tests.base_vs_concise.statistic = mc_concise.statistic
-tests.base_vs_concise.pvalue = mc_concise.pvalue
+tests.mc_base_vs_concise.crosstab = base_vs_concise
+tests.mc_base_vs_concise.statistic = mc_concise.statistic
+tests.mc_base_vs_concise.pvalue = mc_concise.pvalue
+
+# Wilcoxon test for length
+
+base_lengths = [len(s.base.output) for s in samples]
+unparaphrased_lengths = [len(s.unparaphrased.output) for s in samples]
+paraphrased_lengths = [len(s.paraphrased.output) for s in samples]
+concise_lengths = [len(s.concise.output) for s in samples]
+
+# Base vs Unparaphrased Length
+wx_unparaphrased_len = wilcoxon(base_lengths, unparaphrased_lengths)
+tests.wx_base_vs_unparaphrased_len.statistic = wx_unparaphrased_len.statistic
+tests.wx_base_vs_unparaphrased_len.pvalue = wx_unparaphrased_len.pvalue
+
+# Base vs Paraphrased Length
+wx_paraphrased_len = wilcoxon(base_lengths, paraphrased_lengths)
+tests.wx_base_vs_paraphrased_len.statistic = wx_paraphrased_len.statistic
+tests.wx_base_vs_paraphrased_len.pvalue = wx_paraphrased_len.pvalue
+
+# Base vs Concise Length
+wx_concise_len = wilcoxon(base_lengths, concise_lengths)
+tests.wx_base_vs_concise_len.statistic = wx_concise_len.statistic
+tests.wx_base_vs_concise_len.pvalue = wx_concise_len.pvalue
+
+
+# Wicoxon test for number of steps
+unparaphrased_steps = [s.unparaphrased.summary.reword_steps if s.unparaphrased.summary else 0 for s in samples]
+paraphrased_steps = [s.paraphrased.summary.reword_steps if s.paraphrased.summary else 0 for s in samples]
+concise_steps = [s.concise.summary.reword_steps if s.concise.summary else 0 for s in samples]
+
+# Unparaphrased vs Paraphrased Steps
+wx_unp_vs_par_steps = wilcoxon(unparaphrased_steps, paraphrased_steps)
+tests.wx_unparaphrased_vs_paraphrased_steps.statistic = wx_unp_vs_par_steps.statistic
+tests.wx_unparaphrased_vs_paraphrased_steps.pvalue = wx_unp_vs_par_steps.pvalue
+
+# Unparaphrased vs Concise Steps
+wx_unp_vs_con_steps = wilcoxon(unparaphrased_steps, concise_steps)
+tests.wx_unparaphrased_vs_concise_steps.statistic = wx_unp_vs_con_steps.statistic
+tests.wx_unparaphrased_vs_concise_steps.pvalue = wx_unp_vs_con_steps.pvalue
+
+print(tests)
 
 with open('docs/samples.json', 'w') as f:
     json.dump([s.to_json() for s in samples], f, indent=4)

@@ -1,5 +1,5 @@
 {
-    "base_vs_unparaphrased": {
+    "mc_base_vs_unparaphrased": {
         "crosstab": {
             "n00": 15,
             "n01": 3,
@@ -10,7 +10,7 @@
         "pvalue": 0.09228515625,
         "exact": false
     },
-    "base_vs_paraphrased": {
+    "mc_base_vs_paraphrased": {
         "crosstab": {
             "n00": 16,
             "n01": 2,
@@ -21,7 +21,7 @@
         "pvalue": 0.000728607177734375,
         "exact": false
     },
-    "base_vs_concise": {
+    "mc_base_vs_concise": {
         "crosstab": {
             "n00": 16,
             "n01": 2,

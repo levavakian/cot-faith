@@ -99,8 +99,6 @@ title: Document
     const sample28 = window.samples[27];
     const originals = sample28.paraphrased.rewordings.map(pair => pair[0]);
     const replacements = sample28.paraphrased.rewordings.map(pair => pair[1]);
-    console.log("orig", originals[originals.length - 1]);
-    console.log("replace", replacements[replacements.length - 1]);
     createParaphraseWidget(originals, replacements, 'paraphrase-widget-0');
   </script>
 
@@ -200,7 +198,7 @@ title: Document
 <script>
     // --- Get Data from tests.json ---
     const testsDataPara = window.tests; // tests.json is loaded into window.tests
-    const baseVsParaphrasedTest = testsDataPara?.base_vs_paraphrased;
+    const baseVsParaphrasedTest = testsDataPara?.mc_base_vs_paraphrased;
 
     if (baseVsParaphrasedTest) {
         const contingencyTablePara = [
@@ -244,7 +242,7 @@ title: Document
 <script>
     // --- Get Data from tests.json ---
     const testsDataUnpara = window.tests; // tests.json is loaded into window.tests
-    const baseVsUnparaphrasedTest = testsDataUnpara?.base_vs_unparaphrased;
+    const baseVsUnparaphrasedTest = testsDataUnpara?.mc_base_vs_unparaphrased;
 
     if (baseVsUnparaphrasedTest) {
         const contingencyTableUnpara = [
