@@ -530,7 +530,7 @@ if __name__ == "__main__":
 
     datastore["aime"] = {}
     aime()
-    # aime("_2")
+    aime("_2")
     # aime("_3")
 
     # datastore["arithmetic"] = {}
