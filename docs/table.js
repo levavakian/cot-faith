@@ -62,7 +62,7 @@ function createBooleanTable(titles, dataArrays, containerId) {
     fontSize: '1em', // Keep relative font size
     flexShrink: 0,
     // --- SCALING ---
-    transform: 'scale(0.75)',
+    transform: 'scale(0.6)',
     transformOrigin: 'center center' // Scale from the center
     // overflow: 'hidden', // Optional: Uncomment if needed
   });

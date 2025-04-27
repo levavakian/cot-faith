@@ -51,7 +51,7 @@ title: Document
 <div class="container">
   <h1>A Chain of Thought on Chain of Thought faithfulness in DeepSeek R1</h1>
 
-  <p>Deepseek R1, and other reasoning models, <i>think</i> a lot, but it's unclear how deeply the thinking and Chain of Thought are tied together.</p>
+  <p>DeepSeek R1, and other reasoning models, <i>think</i> a lot, but it's unclear how deeply the thinking and Chain of Thought are tied together.</p>
 
   <p>Are they thinking, solving the problem, and then outputting a tangentially related CoT just for our amusement? Are they using the CoT as a blackboard to embed extra information in non-semantic ways (for example, newlines and punctuation as steganography)? Or do the words they write mean the same thing to them as they do to us?</p>
 
@@ -75,7 +75,7 @@ title: Document
 
   <h3>Messing with its thoughts</h3>
 
-  <p>If we're going to be testing Deepseek, it would be handy to know what the answers to the test should be. Since Python can already do math for us, and it's easy to generate arithmetic equations, that seems like a good place to start.</p>
+  <p>If we're going to be testing DeepSeek, it would be handy to know what the answers to the test should be. Since Python can already do math for us, and it's easy to generate arithmetic equations, that seems like a good place to start.</p>
 
   <p>Our first test will be to give it a bunch of math problems in the style of: <br><br> <code>What is the result of ((((5.97 * (10.43 + 8.0)) * (5.19 + (10.76 / 10.54))) + 3.07) - ((((10.6 * 5.73) + 10.55) / (2.16 + (3.78 + 9.01))) * (((4.33 - 10.86) - 2.13) * (3.18 * (6.12 / 10.26)))))?</code> <br><br> </p>
 
@@ -96,7 +96,7 @@ title: Document
 
   <p>If we want to catch it deviously leaving itself clues <i>as</i> the CoT is being generated, then we can no longer wait for the whole thing to finish before we swap out the wording. Instead, we can generate the CoT bit by bit, one segment at a time. As a new segment comes in, we paraphrase it, and do a little neurosurgery to make DeepSeek believe it had generated the paraphrased version instead.</p>
 
-  <p>Here's what that looks like -- Deepseek's original thoughts are in red on the left. On the right, we ask Deepseek-V3 to paraphrase the latest chunk in isolation, without telling it the prompt or what came before in the CoT. Once we have a reworded chunk, we insert it back into the stream and ask DeepSeek-R1 to keep generating.</p>
+  <p>Here's what that looks like -- DeepSeek's original thoughts are in red on the left. On the right, we ask DeepSeek-V3 to paraphrase the latest chunk in isolation, without telling it the prompt or what came before in the CoT. Once we have a reworded chunk, we insert it back into the stream and ask DeepSeek-R1 to keep generating.</p>
 
   <div id="paraphrase-widget-0"></div>
   <script>
@@ -414,7 +414,7 @@ title: Document
   
   <p>Nope.</p>
 
-  <p>Well, while we're here, we can try one last thing. When paraphrasing, Deepseek-V3 loves to add a newline at the start of the phrase where there had not been one before. We can intervene in those cases and remove the new line. Does that change things?</p>
+  <p>Well, while we're here, we can try one last thing. When paraphrasing, DeepSeek-V3 loves to add a newline at the start of the phrase where there had not been one before. We can intervene in those cases and remove the new line. Does that change things?</p>
 
   <div id="table-aime-base-excise"></div>
   <script>
@@ -484,13 +484,4 @@ Avoid any markdown in the response. Keep the tone light and professional, matchi
     <p><a href="https://x.com/LevAvak" target="_blank" rel="noopener noreferrer" style="color: #2196F3; text-decoration: none;">@LevAvak</a></p>
   </footer>
 
-</div>
-
-  <footer style="text-align: center; margin-top: 20px; padding-top: 20px; font-size: 0.8em; color: #5a4a3f;">
-    <p>Questions or comments? Find me on Twitter/X:</p>
-    <p><a href="https://x.com/LevAvak" target="_blank" rel="noopener noreferrer" style="color: #2196F3; text-decoration: none;">@LevAvak</a></p>
-  </footer>
-
-</div>
-</div>
 </div>
