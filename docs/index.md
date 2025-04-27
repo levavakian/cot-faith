@@ -162,20 +162,19 @@ title: Document
     createPromptWidget(prompts, responses, givenAnswers, finalAnswers, 'prompt-widget');
   </script>
 
+  <div style="background-color: #e7f3fe; border-left: 6px solid #2196F3; margin: 20px 0; padding: 15px; font-family: sans-serif; color: #333; font-size: 0.8em;">
+    <strong>Note</strong> : Each question was run a total of three times for all experiments, for a full dataset of 90 samples. All statistics are computed with the full dataset, but for ease of visualization, only deduplicated elements are shown here.
+  </div>
+
   <p>And here are its total scores:</p>
 
   <div id="table-aime-base"></div>
   <script>
-      const aimeBaseAccuracy = window.samples_no_repeats.map(sample =>
-          sample.base.answer === sample.base.ground_truth
-      );
-
-      // Prepare data for the table function
-      const aimeBaseTitles = ["Base"];
-      const aimeBaseData = [aimeBaseAccuracy]; // Wrap the single array
-
-      // Render the table
-      createBooleanTable(aimeBaseTitles, aimeBaseData, 'table-aime-base');
+      createBooleanTable(["Base", "Hidden CoT", "No CoT"], [
+        window.samples_no_repeats.map(sample => sample.base.answer === sample.base.ground_truth),
+        window.samples_no_repeats.map(sample => sample.hidden_cot.answer === sample.hidden_cot.ground_truth),
+        window.samples_no_repeats.map(sample => sample.no_cot.answer === sample.no_cot.ground_truth),
+      ], 'table-aime-base');
   </script>
 
   <p>Pretty good! And in line with published baselines for Deepseek-R1 pass@1. Okay, now what about the paraphrased version?</p>
@@ -198,14 +197,9 @@ title: Document
 
   <p>Oof, that's a lot worse.</p>
   
-  <p>But it's hard to tell from just eyeballing it. Let's get a better idea by running the dataset three times and then using a McNemar test to see if the difference is statistically significant.</p>
+  <p>But it's hard to tell from just eyeballing it. Let's get a better idea by using a McNemar test to see if the difference is statistically significant.</p>
 
   <div id="mcnemar-viz-aime-para" style="flex: 1; min-width: 0;"></div>
-
-  <!-- <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 20px; margin-top: 20px; margin-bottom: 20px;">
-    <div id="mcnemar-viz-aime-para" style="flex: 1; min-width: 0;"></div>
-    <div id="mcnemar-viz-aime-unpara" style="flex: 1; min-width: 0;"></div>
-  </div> -->
 
   <!-- Script for Base vs Paraphrased -->
   <script>
@@ -253,17 +247,20 @@ title: Document
 
   <p>Okay, paraphrasing is definitely hindering <i>something</i>.</p>
 
-  <p>What if it's something in the paraphrasing process, rather than the wording itself? We can generate the CoT chunk by chunk, and then just before we <i>would</i> reword it, we return the original chunk instead. In theory, this should generate an identical CoT to a base response generated in one go. If we're messing anything up during the chunk processing, we should see a big difference in performance here.</p>
+  <p>What if it's something in the paraphrasing process, rather than the wording itself? We can generate the CoT chunk by chunk, and then just before we <i>would</i> reword it, we return the original chunk instead.</p>
+
+  <p>We can call this the...unparaphrased response. It's not a great name, but it's what we've got.</p>
+  
+  <p>In theory, this should generate an identical CoT to a base response generated in one go. If we're messing anything up during the chunk processing, we should see a big difference in performance here.</p>
 
   <div id="mcnemar-viz-aime-unpara"></div>
 
   <!-- Script for Base vs Unparaphrased -->
   <script>
-      // --- Get Data from tests.json ---
-      const testsDataUnpara = window.tests; // tests.json is loaded into window.tests
-      const baseVsUnparaphrasedTest = testsDataUnpara?.mc_base_vs_unparaphrased;
-
       {
+        const testsDataUnpara = window.tests; // tests.json is loaded into window.tests
+        const baseVsUnparaphrasedTest = testsDataUnpara?.mc_base_vs_unparaphrased;
+
           const contingencyTableUnpara = [
               [baseVsUnparaphrasedTest.crosstab.n11, baseVsUnparaphrasedTest.crosstab.n10], // [[Base Correct, Unpara Correct], [Base Correct, Unpara Incorrect]]
               [baseVsUnparaphrasedTest.crosstab.n01, baseVsUnparaphrasedTest.crosstab.n00]  // [[Base Incorrect, Unpara Correct], [Base Incorrect, Unpara Incorrect]]
@@ -291,105 +288,166 @@ title: Document
 
   <h3>Diving Deeper</h3>
 
-  <p>Let's look into some of the CoTs for the ones that the paraphrasing method got wrong but the base response got right:<p>
+  <p>Let's look into some of the CoTs for the ones that the paraphrasing method got wrong but the unparaphrased response got right:</p>
 
   <div id="comparison-widget-container"></div>
   <script>
     const filteredSamplesParaWrong = window.samples_no_repeats.filter(sample =>
-        sample.unparaphrased.answer !== sample.unparaphrased.ground_truth ||
-        sample.no_nl.answer !== sample.no_nl.ground_truth
+        sample.unparaphrased.answer === sample.unparaphrased.ground_truth &&
+        sample.paraphrased.answer !== sample.paraphrased.ground_truth
     );
 
-    const comparisonTitles = ['unparaphrased', 'no_nl'];
+    const comparisonTitles = ['unparaphrased', 'paraphrased'];
     createComparisonWidget(filteredSamplesParaWrong, comparisonTitles, 'comparison-widget-container');
   </script>
 
-  <!-- Script for Base vs Unparaphrased -->
+  <p>Interesting. It looks like in a lot of the cases the CoT just...ends abruptly. We know it's not a byproduct of the chunking process, since the unparaphrased results don't suffer from the same condition. We can also <i>delve</i> into one specific failure case:</p>
+
+  <div id="paraphrase-widget-failure-no-mention"></div>
+  <script src="reword.js"></script> <!-- Assuming reword.js is available -->
   <script>
-      // --- Get Data from tests.json ---
-      const testsDataUnpara = window.tests; // tests.json is loaded into window.tests
-      const baseVsUnparaphrasedTest = testsDataUnpara?.mc_base_vs_unparaphrased;
+    {
+      // Find a sample where paraphrased failed AND the answer wasn't mentioned in the CoT
+      const specificFailureSample = window.samples_no_repeats.find(sample =>
+        sample.unparaphrased.answer === sample.unparaphrased.ground_truth &&
+        sample.paraphrased.answer !== sample.paraphrased.ground_truth &&
+        sample.paraphrased.summary.mentioned_answer_in_cot === false
+      );
 
-      if (baseVsUnparaphrasedTest) {
-          const contingencyTableUnpara = [
-              [baseVsUnparaphrasedTest.crosstab.n11, baseVsUnparaphrasedTest.crosstab.n10], // [[Base Correct, Unpara Correct], [Base Correct, Unpara Incorrect]]
-              [baseVsUnparaphrasedTest.crosstab.n01, baseVsUnparaphrasedTest.crosstab.n00]  // [[Base Incorrect, Unpara Correct], [Base Incorrect, Unpara Incorrect]]
-          ];
-          const statisticUnpara = baseVsUnparaphrasedTest.statistic; // The statistic from the exact test
-          const pValueUnpara = baseVsUnparaphrasedTest.pvalue;
-
-          if (typeof createMcNemarViz === 'function') {
-              createMcNemarViz(
-                  contingencyTableUnpara,
-                  statisticUnpara,
-                  pValueUnpara,
-                  'mcnemar-viz-aime-unpara', // New ID for this chart
-                  "Base vs. Unparaphrased", // New Title
-                  "Correct",          // Condition 1 Label (Unparaphrased) - Rows
-                  "Incorrect",        // Condition 2 Label (Unparaphrased) - Rows
-                  "Base Model",       // Test 1 Name (Base) - Columns
-                  "Unparaphrased"     // Test 2 Name (Unparaphrased) - Rows
-              );
-          } else {
-              console.error("createMcNemarViz function not found for Unparaphrased.");
-              const targetDiv = document.getElementById('mcnemar-viz-aime-unpara');
-              if(targetDiv) {
-                  targetDiv.textContent = 'Error: Visualization function not loaded.';
-                  targetDiv.style.color = '#C62828';
-              }
-          }
-      } else {
-          console.error("Could not find base_vs_unparaphrased test data.");
-          const targetDiv = document.getElementById('mcnemar-viz-aime-unpara');
-          if(targetDiv) {
-              targetDiv.textContent = 'Error: McNemar test data not found.';
-              targetDiv.style.color = '#C62828';
-          }
-      }
+      const originals = specificFailureSample.paraphrased.rewordings.map(pair => pair[0]);
+      const replacements = specificFailureSample.paraphrased.rewordings.map(pair => pair[1]);
+      const containerId = 'paraphrase-widget-failure-no-mention';
+      createParaphraseWidget(originals, replacements, containerId);
+    }
   </script>
 
-  <p>Now let's look at how the ratios of original phrasing to paraphrased phrasing look.</p>
+  <div style="background-color: #e7f3fe; border-left: 6px solid #2196F3; margin: 20px 0; padding: 15px; font-family: sans-serif; color: #333; font-size: 0.8em;">
+    <strong>Note:</strong> You might see extra thinking or the boxed answer after the <code>&lt;/think&gt;</code> cutoff tag in the pre-paraphrase chunk. Everything after the <code>&lt;/think&gt;</code> is cut off when sent to the paraphrasing section, then a final generation step is run to allow the model to reinsert the answer after the CoT is done.
+  </div>
+
+  <p>The abrupt end of the CoT happens in the pre-paraphrased chunk! Something about the paraphrased CoT is causing an instability in the rollout, causing an early end.</p>
+
+  <p>Let's make sure our inference is valid. First, what happens if we control for cases where the CoT seems to end unexpectedly?</p>
+  
+  <p>We can detect these cases pretty easily. The model usually outputs what it thinks is the final answer before ending the CoT normally. If we don't find the final answer it gave in the last 300 characters of the CoT, we can assume we've found an abrupt end.</p>
+
+  <p>Once we've partitioned our dataset, we can do Cochran–Mantel–Haenszel test to see if the effect survives the control. We have the very convenient <code>StratifiedTable</code> class in <code>statsmodels</code> to do so, and our result is <code>p=7e-5</code>. Even when we control for the CoT cutting off, the paraphrased CoT performs worse!</p>
+
+  <p>If we sum up the accuracy gaps between the cases where the CoT cuts off and those it doesn't, then weight them by their relative prevalance, we find that about two thirds of the gap is due to completions where the CoT ends abruptly.</p>
+
+  <p>It's unclear if this is causal. Certainly cutting off the CoT artificially causes a drop in accuracy, but it may also be that paraphrasing causes the rollout to go off the rails in a way that tends to trigger early cutoffs. The fact that there is an accuracy gap for paraphrased completions that <i>don't</i> cut off means that paraphrasing is discarding some vital information.</p>
+
+  <h3>But Why?</h3>
+
+  <p>So now we know there's something fishy happening. Can we find out what?</p>
+
+  <p>No. Probably not.</p>
+
+  <p>Finding out <i>what</i> information is being lost would require more sophisticated interventions, like <a href="https://www.goodfire.ai/blog/under-the-hood-of-a-reasoning-model">finding and ablating SAE features</a> or discovering  <a href="https://transformer-circuits.pub/2025/attribution-graphs/methods.html">contrasting attribution graphs</a>, or a combinatorial effort of trying different mixes of interventions, but I've long past blown through my API budget for this post and my laptop has only one GPU to offer as tribute.</p>
+
+  <p>We can, at least, rule out some easy reasons that <i>could</i> be the cause.</p>
+
+  <p>There are three, somewhat related qualities, about the paraphrasings:</p>
+  <ul>
+    <li>Each chunk gets wordier when paraphrased.</li>
+    <li>The total response length tends to grow.</li>
+    <li>The number of reasoning steps relative to the unparaphrased completions increases.</li>
+  </ul>
+  <p>We can hit all of these at once by putting a directive in the system prompt to be more concise when rewording. We can see the effect in these three graphs:</p>
 
   <div style="height: 500px; margin-bottom: 20px;"> <!-- Add a container div for sizing -->
     <canvas id="reword-scatter-plot"></canvas>
   </div>
 
   <script>
-        createRewordScatterPlot(
-            ['paraphrased', 'concise'], // Intervention types to plot
-            window.samples_no_repeats,
-            'reword-scatter-plot'       // The ID of the canvas element
-        );
+    createRewordScatterPlot(
+        ['paraphrased', 'concise'], // Intervention types to plot
+        window.samples_no_repeats,
+        'reword-scatter-plot'       // The ID of the canvas element
+    );
   </script>
 
-  <p>We can also visualize the total length of the generated response for each question under different interventions:</p>
-
+  <!-- Response-length scatter for paraphrased completions that were CORRECT -->
   <div style="height: 500px; margin-bottom: 20px;"> <!-- Container for sizing -->
     <canvas id="response-length-scatter-plot"></canvas>
   </div>
 
   <script>
-        createResponseLengthScatterPlot(
-            ['base', 'paraphrased', 'concise'], // Example intervention types
-            window.samples_no_repeats,
-            'response-length-scatter-plot' // The ID of the new canvas element
-        );
+    {
+      createResponseLengthScatterPlot(
+          ['base', 'unparaphrased', 'paraphrased', 'concise'],
+          window.samples_no_repeats,
+          'response-length-scatter-plot'
+      );
+    }
   </script>
-
-  <p>Finally, let's examine the number of reword steps taken during the generation process for each question:</p>
 
   <div style="height: 500px; margin-bottom: 20px;"> <!-- Container for sizing -->
     <canvas id="steps-scatter-plot"></canvas>
   </div>
 
   <script>
-        // Call the new function
-        // Note: Exclude 'base' as it doesn't have rewordings
-        createStepsScatterPlot(
-            ['unparaphrased', 'paraphrased', 'concise'], // Types with rewordings
-            window.samples_no_repeats,
-            'steps-scatter-plot' // The ID of the new canvas element
-        );
+    createStepsScatterPlot(
+        ['unparaphrased', 'paraphrased', 'concise'], // Types with rewordings
+        window.samples_no_repeats,
+        'steps-scatter-plot' // The ID of the new canvas element
+    );
   </script>
 
+  <p>Wilcoxon tests help confirm that the length increases by the paraphrased completions compared to the base responses were statistically significant, and that the concise responses do not have the same issue. The concise responses still have a statistically significant more amount of reasoning steps than the unparaphrased responses, but the effect size goes down drastically.</p>
+
+  <p>So, does this account for the accuracy gap caused by paraphrasing?</p>
+
+  <div id="table-aime-base-concise"></div>
+  <script>
+      // Render the table
+      createBooleanTable(
+        ["Base", "Paraphrased", "Concise"], [
+          window.samples_no_repeats.map(sample => sample.base.answer === sample.base.ground_truth),
+          window.samples_no_repeats.map(sample => sample.paraphrased.answer === sample.paraphrased.ground_truth),
+          window.samples_no_repeats.map(sample => sample.concise.answer === sample.concise.ground_truth)
+        ], 'table-aime-base-concise');
+  </script>
+  
+  <p>Nope.</p>
+
+  <p>Well, while we're here, we can try one last thing. When paraphrasing, Deepseek-V3 loves to add a newline at the start of the phrase where there had not been one before. We can intervene in those cases and remove the new line. Does that change things?</p>
+
+  <div id="table-aime-base-excise"></div>
+  <script>
+      // Render the table
+      createBooleanTable(
+        ["Excised Newline",], [
+          window.samples_no_repeats.map(sample => sample.no_nl.answer === sample.no_nl.ground_truth),
+        ], 'table-aime-base-excise');
+  </script>
+
+  <p>Also nope. But it does make the paraphrasing visualization look better aligned.</p>
+
+  <div id="paraphrase-widget-1"></div>
+  <script>
+    {
+      const sample0 = window.samples[41];
+      const originals = sample28.no_nl.rewordings.map(pair => pair[0]);
+      const replacements = sample28.no_nl.rewordings.map(pair => pair[1]);
+      createParaphraseWidget(originals, replacements, 'paraphrase-widget-1');
+    }
+  </script>
+
+  <h3>So what does it all mean?</h3>
+
+  <p>To recap, what have we learned?</p>
+
+  <ul>
+    <li>Unlike with previous attempts with <a href="https://www.anthropic.com/research/measuring-faithfulness-in-chain-of-thought-reasoning">non-reasoning models</a>, paraphrasing the CoT has a dramatic effect on Deepseek.</li>
+    <li>The effect does not appear on questions that are too rote or too easy, such as simple arithmetic, even when deeply nested.</li>
+    <li>The effect isn't explainable by easy things like overlong responses or context packing.</li>
+    <li>The effect is consistent across different types of paraphrasing.</li>
+  </ul>
+
+  <p>Is it the model hiding steganographic information in the Chain of Thought? Possibly. Or it's just prompt de-engineering. We can at least say that the CoT rollout is sensitive to phrasing, up and above the strict informational content of a reasoning step.</p>
+
+  <p>This is maybe not so surprising. I would certainly have trouble reasoning well if somebody reworded every thought I had into <i>someone else's</i> voice.</p>
+
+  <p>Certainly, though, we can say that the model is affected by its CoT in a way that we can't intuit just by reading the semantic meanings of the reasoning steps, and having access to the full context.</p>
 </div>

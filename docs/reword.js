@@ -11,6 +11,7 @@ function createParaphraseWidget(originals, replacements, containerId) {
    * ------------------------------------------------------------------ */
   const STEP_COUNT   = originals.length;
   const FINAL_TICK   = STEP_COUNT;
+  const CHARS_PER_TICK = 4; // how many characters to emit each animation frame
   const TYPE_DELAY   = 10; // ms per character (Keep it fast)
   const ANIM_TIME    = 500;
   const POST_TYPE_DELAY = 50;
@@ -189,7 +190,10 @@ function createParaphraseWidget(originals, replacements, containerId) {
 
         function nextChar() {
             if (idx < text.length) {
-                el.textContent += text[idx++];
+                // emit a small batch each frame
+                const nextIdx = Math.min(idx + CHARS_PER_TICK, text.length);
+                el.textContent += text.slice(idx, nextIdx);
+                idx = nextIdx;
                 // *** Call scroll on every frame during typing ***
                 requestAnimationFrame(scrollToBottom);
                 el._typingId = requestAnimationFrame(nextChar);

@@ -1,6 +1,6 @@
 /**
  * Creates a scatter plot comparing the number of reword steps for different intervention types across questions,
- * and displays the average step count ratio relative to the 'unparaphrased' case below the chart.
+ * and displays the median step count ratio relative to the 'unparaphrased' case below the chart.
  *
  * @param {string[]} interventionTypes - An array of intervention type names (e.g., ['paraphrased', 'concise', 'unparaphrased']). Must include 'unparaphrased'.
  * @param {object[]} samples - An array of sample objects. Each relevant intervention object should have a 'rewordings' property (an array).
@@ -46,7 +46,7 @@ function createStepsScatterPlot(interventionTypes, samples, targetElementId) {
 
   const datasets = [];
   let maxSteps = 0;
-  const averageRatioData = {}; // Object to store sum of ratios and counts per type (relative to unparaphrased)
+  const ratioLists = {};       // Store lists of ratios per type (relative to unparaphrased)
   // Pre-calculate unparaphrased steps
   const unparaphrasedStepsList = samples.map(sample =>
       (sample.unparaphrased && Array.isArray(sample.unparaphrased.rewordings)) ? sample.unparaphrased.rewordings.length : null
@@ -54,9 +54,9 @@ function createStepsScatterPlot(interventionTypes, samples, targetElementId) {
 
   interventionTypes.forEach((type) => {
     const dataPoints = [];
-    // Initialize ratio data only for types other than 'unparaphrased'
+    // Initialize ratio list only for types other than 'unparaphrased'
     if (type !== 'unparaphrased') {
-        averageRatioData[type] = { sum: 0, count: 0 };
+        ratioLists[type] = [];
     }
 
     samples.forEach((sample, sampleIndex) => {
@@ -71,11 +71,10 @@ function createStepsScatterPlot(interventionTypes, samples, targetElementId) {
         });
         maxSteps = Math.max(maxSteps, steps);
 
-        // Calculate and accumulate ratio if not unparaphrased and unparaphrasedSteps is valid
+        // Calculate and collect ratio if not unparaphrased and unparaphrasedSteps is valid
         if (type !== 'unparaphrased' && unparaphrasedSteps !== null && unparaphrasedSteps > 0) {
             const ratio = steps / unparaphrasedSteps;
-            averageRatioData[type].sum += ratio;
-            averageRatioData[type].count += 1;
+            ratioLists[type].push(ratio); // Collect ratio
         } else if (type !== 'unparaphrased' && (unparaphrasedSteps === null || unparaphrasedSteps === 0)) {
              console.warn(`Cannot calculate step ratio for type "${type}" at index ${sampleIndex} due to invalid 'unparaphrased' steps.`);
         }
@@ -148,35 +147,46 @@ function createStepsScatterPlot(interventionTypes, samples, targetElementId) {
 
   new Chart(ctx, config);
 
-   // --- Add Average Step Ratio Display (Relative to Unparaphrased) ---
-  let averagesHtml = `<div style="text-align: center;"><span style="font-size: 0.8em;"><strong>Average Step Ratio (vs. Unparaphrased):</strong></span><br>`;
+   // --- Add Median Step Ratio Display (Relative to Unparaphrased) ---
+  let mediansHtml = `<div style="text-align: center; margin-top: 10px;"><span style="font-size: 0.8em;"><strong>Median Step Ratio (vs. Unparaphrased):</strong></span><br>`;
   interventionTypes.forEach(type => {
-      // Only display for types other than 'unparaphrased'
-      if (type !== 'unparaphrased' && averageRatioData[type]) {
-          const data = averageRatioData[type];
-          const average = data.count > 0 ? (data.sum / data.count) : 0;
+       // Only display for types other than 'unparaphrased'
+      if (type !== 'unparaphrased' && ratioLists[type]) {
+          const ratios = ratioLists[type];
+          let median = 0;
+          if (ratios.length > 0) {
+              const sortedRatios = ratios.slice().sort((a, b) => a - b);
+              const midIndex = Math.floor(sortedRatios.length / 2);
+              if (sortedRatios.length % 2 === 0) {
+                  // Even number of elements, average the two middle ones
+                  median = (sortedRatios[midIndex - 1] + sortedRatios[midIndex]) / 2;
+              } else {
+                  // Odd number of elements, pick the middle one
+                  median = sortedRatios[midIndex];
+              }
+          }
           const color = getColor(type).replace('0.8', '1'); // Use border color
 
           // Display the ratio, formatted to 2 decimal places
-          averagesHtml += `<span style="color: ${color}; margin: 0 10px; display: inline-block;">${type.charAt(0).toUpperCase() + type.slice(1)}: ${average.toFixed(2)}</span>`;
+          mediansHtml += `<span style="color: ${color}; margin: 0 10px; display: inline-block;">${type.charAt(0).toUpperCase() + type.slice(1)}: ${median.toFixed(2)}</span>`;
       }
   });
-  averagesHtml += '</div>';
+  mediansHtml += '</div>';
 
   // Find the container div that holds the canvas
   const canvasContainer = canvasElement.parentNode;
 
-  // Check if the averages div already exists, if so, update it, otherwise create it
-  let averagesDiv = document.getElementById(targetElementId + '-averages');
-  if (!averagesDiv) {
-      averagesDiv = document.createElement('div');
-      averagesDiv.id = targetElementId + '-averages';
+  // Check if the medians div already exists, if so, update it, otherwise create it
+  let mediansDiv = document.getElementById(targetElementId + '-medians');
+  if (!mediansDiv) {
+      mediansDiv = document.createElement('div');
+      mediansDiv.id = targetElementId + '-medians';
       if (canvasContainer && canvasContainer.parentNode) {
-          canvasContainer.parentNode.insertBefore(averagesDiv, canvasContainer.nextSibling);
+          canvasContainer.parentNode.insertBefore(mediansDiv, canvasContainer.nextSibling);
       } else {
-          console.warn("Could not find canvas container to insert averages div after.");
-          document.body.appendChild(averagesDiv);
+          console.warn("Could not find canvas container to insert medians div after.");
+          document.body.appendChild(mediansDiv);
       }
   }
-  averagesDiv.innerHTML = averagesHtml;
+  mediansDiv.innerHTML = mediansHtml;
 }

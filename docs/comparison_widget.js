@@ -196,6 +196,8 @@ function createComparisonWidget(samples, titles, containerId) {
 
             if (interventionData && elements) {
                 elements.respDiv.textContent = interventionData.output || '';
+                elements.respDiv.scrollTop = elements.respDiv.scrollHeight;
+
                 elements.givenAnsContent.textContent = interventionData.answer !== null && interventionData.answer !== undefined ? interventionData.answer : 'N/A';
                 elements.lengthContent.textContent = interventionData.output?.length || 0;
 
@@ -215,8 +217,9 @@ function createComparisonWidget(samples, titles, containerId) {
                 }
 
             } else if (elements) {
-                // Clear fields if intervention data is missing for this sample
                 elements.respDiv.textContent = 'Data not available.';
+                elements.respDiv.scrollTop = elements.respDiv.scrollHeight;
+
                 elements.givenAnsContent.textContent = 'N/A';
                 elements.lengthContent.textContent = 'N/A';
                 elements.stepsContent.textContent = 'N/A';
@@ -226,13 +229,6 @@ function createComparisonWidget(samples, titles, containerId) {
                 if (brTag && brTag.nodeName === 'BR') {
                     elements.answerDiv.removeChild(brTag);
                 }
-            }
-        });
-
-        // Scroll response divs to top
-         Object.values(interventionElements).forEach(elements => {
-            if (elements.respDiv) {
-                elements.respDiv.scrollTop = 0;
             }
         });
     }

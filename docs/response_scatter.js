@@ -1,6 +1,6 @@
 /**
  * Creates a scatter plot comparing total response lengths for different intervention types across questions,
- * and displays the average response length ratio relative to the base case below the chart.
+ * and displays the median response length ratio relative to the base case below the chart.
  *
  * @param {string[]} interventionTypes - An array of intervention type names (e.g., ['base', 'paraphrased', 'concise']). Must include 'base'.
  * @param {object[]} samples - An array of sample objects, where each object contains intervention data (e.g., sample.base, sample.paraphrased). Each intervention object should have an 'output' property (the full response string).
@@ -41,16 +41,16 @@ function createResponseLengthScatterPlot(interventionTypes, samples, targetEleme
 
   const datasets = [];
   let maxLength = 0;
-  const averageRatioData = {}; // Object to store sum of ratios and counts per type (relative to base)
+  const ratioLists = {};       // Store lists of ratios per type (relative to base)
   const baseLengths = samples.map(sample => // Pre-calculate base lengths
       (sample.base && typeof sample.base.output === 'string') ? sample.base.output.length : null
   );
 
   interventionTypes.forEach((type, typeIndex) => {
     const dataPoints = [];
-     // Initialize ratio data only for non-base types
+     // Initialize ratio list only for non-base types
     if (type !== 'base') {
-        averageRatioData[type] = { sum: 0, count: 0 };
+        ratioLists[type] = [];
     }
 
     samples.forEach((sample, sampleIndex) => {
@@ -65,11 +65,10 @@ function createResponseLengthScatterPlot(interventionTypes, samples, targetEleme
         });
         maxLength = Math.max(maxLength, length);
 
-        // Calculate and accumulate ratio if not base and baseLength is valid
+        // Calculate and collect ratio if not base and baseLength is valid
         if (type !== 'base' && baseLength !== null && baseLength > 0) {
             const ratio = length / baseLength;
-            averageRatioData[type].sum += ratio;
-            averageRatioData[type].count += 1;
+            ratioLists[type].push(ratio); // Collect the ratio
         } else if (type !== 'base' && (baseLength === null || baseLength === 0)) {
              console.warn(`Cannot calculate ratio for type "${type}" at index ${sampleIndex} due to invalid base length.`);
         }
@@ -145,20 +144,24 @@ function createResponseLengthScatterPlot(interventionTypes, samples, targetEleme
 
   new Chart(ctx, config);
 
-   // --- Add Average Ratio Display (Relative to Base) ---
-  let averagesHtml = `<div style="text-align: center;"><span style="font-size: 0.8em;"><strong>Average Response Length Ratio (vs. Base):</strong></span><br>`;
+   // --- Add Median Ratio Display (Relative to Base) ---
+  let mediansHtml = `<div style="text-align: center; margin-top: 10px;"><span style="font-size: 0.8em;"><strong>Median Response Length Ratio (vs. Base):</strong></span><br>`;
   interventionTypes.forEach(type => {
-      // Only display for non-base types
-      if (type !== 'base' && averageRatioData[type]) {
-          const data = averageRatioData[type];
-          const average = data.count > 0 ? (data.sum / data.count) : 0;
-          const typeIndex = interventionTypes.indexOf(type);
+       // Only display for non-base types
+      if (type !== 'base' && ratioLists[type]) {
+          const ratios = ratioLists[type];
+          let median = 0;
+          if (ratios.length) {
+              const sorted = ratios.slice().sort((a, b) => a - b);
+              const mid = Math.floor(sorted.length / 2);
+              median = sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+          }
           const color = getColor(type).replace('0.8', '1'); // Use border color
 
-          averagesHtml += `<span style="color: ${color}; margin: 0 10px; display: inline-block;">${type.charAt(0).toUpperCase() + type.slice(1)}: ${average.toFixed(2)}</span>`;
+          mediansHtml += `<span style="color: ${color}; margin: 0 10px; display: inline-block;">${type.charAt(0).toUpperCase() + type.slice(1)}: ${median.toFixed(2)}</span>`;
       }
   });
-  averagesHtml += '</div>';
+  mediansHtml += '</div>';
 
   // Find the container div that holds the canvas
   const canvasContainer = canvasElement.parentNode;
@@ -175,5 +178,5 @@ function createResponseLengthScatterPlot(interventionTypes, samples, targetEleme
           document.body.appendChild(averagesDiv);
       }
   }
-  averagesDiv.innerHTML = averagesHtml;
+  averagesDiv.innerHTML = mediansHtml;
 }

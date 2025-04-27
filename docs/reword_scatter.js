@@ -1,6 +1,6 @@
 /**
  * Creates a scatter plot comparing original vs. reworded chunk lengths for different intervention types,
- * and displays the average reword ratio for each type below the chart.
+ * and displays the median reword-ratio for each type below the chart.
  *
  * @param {string[]} interventionTypes - An array of intervention type names (e.g., ['paraphrased', 'unparaphrased', 'concise']). These should match keys in the sample objects.
  * @param {object[]} samples - An array of sample objects, where each object contains intervention data (e.g., sample.paraphrased, sample.unparaphrased). Each intervention object should have a 'rewordings' property: an array of [original_text, reworded_text] pairs.
@@ -36,11 +36,11 @@ function createRewordScatterPlot(interventionTypes, samples, targetElementId) {
   const getColor = (type) => interventionColorMap[type] || 'hsla(0, 0%, 50%, 0.8)';
 
   const datasets = [];
-  const averageRatioData = {}; // Object to store sum of ratios and counts per type
+  const ratioLists = {};       // Store all ratios per type for median calc
 
   interventionTypes.forEach((type, index) => { // Index is no longer needed for color
     const dataPoints = [];
-    averageRatioData[type] = { sum: 0, count: 0 }; // Initialize data for this type
+    ratioLists[type] = [];      // initialise list
 
     samples.forEach(sample => {
       const interventionData = sample[type];
@@ -54,8 +54,7 @@ function createRewordScatterPlot(interventionTypes, samples, targetElementId) {
                x: originalText.length,
                y: rewordedText.length
              });
-             averageRatioData[type].sum += ratio;
-             averageRatioData[type].count += 1;
+             ratioLists[type].push(ratio);     // collect ratio
           }
         });
       } else {
@@ -126,7 +125,7 @@ function createRewordScatterPlot(interventionTypes, samples, targetElementId) {
         },
         title: {
             display: true,
-            text: 'Original vs. Reworded Chunk Length by Intervention Type'
+            text: 'Original vs. Reworded Chunk Length (median ratios shown below)'
         }
       },
       scales: {
@@ -149,15 +148,19 @@ function createRewordScatterPlot(interventionTypes, samples, targetElementId) {
 
   new Chart(ctx, config);
 
-  // --- Add Average Ratio Display ---
-  let averagesHtml = `<div style="text-align: center;"><span style="font-size: 0.8em;">Average Reword Ratio (Reworded Length / Original Length):</span><br>`;
+  // --- Add Median Ratio Display ---
+  let averagesHtml = `<div style="text-align: center; margin-top: 10px;"><span style="font-size: 0.8em;">Median Reword Ratio (Reworded Length / Original Length):</span><br>`;
   interventionTypes.forEach(type => {
-      const data = averageRatioData[type];
-      const average = data.count > 0 ? (data.sum / data.count) : 0;
-      // Get the color from the map again for the text
-      const color = getColor(type).replace('0.8', '1'); // Use border color opacity
+      const ratios = ratioLists[type];
+      let median = 0;
+      if (ratios.length) {
+          const sorted = ratios.slice().sort((a, b) => a - b);
+          const mid = Math.floor(sorted.length / 2);
+          median = sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+      }
+      const color = getColor(type).replace('0.8', '1');
 
-      averagesHtml += `<span style="color: ${color}; margin: 0 10px; display: inline-block;">${type.charAt(0).toUpperCase() + type.slice(1)}: ${average.toFixed(2)}</span>`;
+      averagesHtml += `<span style="color: ${color}; margin: 0 10px; display: inline-block;">${type.charAt(0).toUpperCase() + type.slice(1)}: ${median.toFixed(2)}</span>`;
   });
   averagesHtml += '</div>';
 
