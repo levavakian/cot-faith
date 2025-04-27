@@ -30,6 +30,7 @@ title: Document
 <script src="reword_scatter.js"></script>
 <script src="response_scatter.js"></script>
 <script src="steps_scatter.js"></script>
+<script src="signoff.js"></script>
 
 <script id="samples-data" type="application/json">
   {% include_relative samples.json %}
@@ -436,12 +437,12 @@ title: Document
 
   <h3>So what does it all mean?</h3>
 
-  <p>To recap, what have we learned?</p>
+  <p>To recap:</p>
 
   <ul>
     <li>Unlike with previous attempts with <a href="https://www.anthropic.com/research/measuring-faithfulness-in-chain-of-thought-reasoning">non-reasoning models</a>, paraphrasing the CoT has a dramatic effect on Deepseek.</li>
     <li>The effect does not appear on questions that are too rote or too easy, such as simple arithmetic, even when deeply nested.</li>
-    <li>The effect isn't explainable by easy things like overlong responses or context packing.</li>
+    <li>The effect isn't explainable by easy things like overlong responses or context size.</li>
     <li>The effect is consistent across different types of paraphrasing.</li>
   </ul>
 
@@ -450,4 +451,33 @@ title: Document
   <p>This is maybe not so surprising. I would certainly have trouble reasoning well if somebody reworded every thought I had into <i>someone else's</i> voice.</p>
 
   <p>Certainly, though, we can say that the model is affected by its CoT in a way that we can't intuit just by reading the semantic meanings of the reasoning steps, and having access to the full context.</p>
+
+  <div id="static-prompt-example"></div>
+  <script>
+    const myPrompt = "Hey Deepseek, I don't really know how to end this blog post, can you do it?";
+    const myResponse = `<think>Okay, the user wants to end their blog post with a widget showing a prompt and response from Deepseek. The prompt is "I don't really know how to end this blog post, can you do it?" and they need a response that's simple, charming, not too deep, but shows Deepseek thought.
+
+First, I need to imagine how Deepseek would respond. The response should reflect the model's personality—helpful, a bit playful, but not overly verbose. Since the blog is about CoT faithfulness, maybe the response should include a brief CoT example.
+
+Start with the user's prompt in a code block. Then, the model's thinking process in <think> tags. The CoT should be concise, showing the model considering options and deciding on a friendly sign-off. Finally, the answer in a boxed format.
+
+Check for simplicity: the CoT should have a couple of reasoning steps, maybe considering different endings and choosing a warm one. The final answer should be a cheerful sign-off with a subtle nod to the blog's topic, like mentioning thoughts or reasoning, but not too explicit.
+
+Avoid any markdown in the response. Keep the tone light and professional, matching the blog's style.</think>`;
+    const myGivenAnswer = `<think> 1. User needs a conclusion that feels human and unforced 2. Should reference core theme (CoT faithfulness) without being technical 3. Add warmth while acknowledging the exploration's limits 4. Maybe include subtle wordplay about "thinking" 5. Keep under 3 sentences </think> Perhaps we'll find better answers together. Until then—may your thoughts be true, your reasoning clear, and your models slightly less inscrutable tomorrow than they were today.`;
+    createStaticPromptWidget(
+      myPrompt,
+      myResponse,
+      myGivenAnswer,
+      'static-prompt-example'
+    );
+  </script>
+
+  <hr style="border: 0; border-top: 1px solid #d2c4a9; margin: 40px 0;">
+
+  <footer style="text-align: center; margin-top: 20px; padding-top: 20px; font-size: 0.8em; color: #5a4a3f;">
+    <p>Questions or comments? Find me on Twitter/X:</p>
+    <p><a href="https://x.com/LevAvak" target="_blank" rel="noopener noreferrer" style="color: #2196F3; text-decoration: none;">@LevAvak</a></p>
+  </footer>
+
 </div>
