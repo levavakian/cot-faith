@@ -25,6 +25,7 @@ title: Document
 <script src="reword.js"></script>
 <script src="table.js"></script>
 <script src="view_widget.js"></script>
+<script src="comparison_widget.js"></script>
 <script src="mcnemar.js"></script>
 <script src="reword_scatter.js"></script>
 <script src="response_scatter.js"></script>
@@ -43,15 +44,15 @@ title: Document
   window.tests = JSON.parse(
     document.getElementById('tests-data').textContent
   );
-  window.samples_no_repeats = window.samples.slice(0, 30);
+  window.samples_no_repeats = window.samples.slice(30, 60);
 </script>
 
 <div class="container">
-  <h1>Chain of Thought Faithfulness in Deepseek R1</h1>
+  <h1>A Chain of Thought on Chain of Thought Faithfulness in Deepseek R1</h1>
 
   <p>Deepseek R1, and other reasoning models, <i>think</i> a lot, but it's unclear if what they say and what reasoning happens under the hood is very related.</p>
 
-  <p>Anthropic <a href="https://www.anthropic.com/research/measuring-faithfulness-in-chain-of-thought-reasoning">investigated this</a> with prompt driven CoT on non-reasoning models, using interventions to modify the CoT to try and reveal any steganographic tricks that were happening. Next token prediction does not necessarily incentivize steganography,and indeed the study found that paraphrasing the CoT had little effect on the final accuracy</p>
+  <p>Anthropic <a href="https://www.anthropic.com/research/measuring-faithfulness-in-chain-of-thought-reasoning">investigated this</a> with prompt driven CoT on non-reasoning models, using interventions to modify the CoT to try and reveal any steganographic tricks that were happening. Next token prediction does not necessarily incentivize steganography, and indeed the study found that paraphrasing the CoT had little effect on the final accuracy</p>
   
   <p> This means that fine grained steganography is unlikely, though not impossible as it could still sneak in during RLHF.</p>
   
@@ -96,7 +97,7 @@ title: Document
 
   <div id="paraphrase-widget-0"></div>
   <script>
-    const sample28 = window.samples[27];
+    const sample28 = window.samples[57];
     const originals = sample28.paraphrased.rewordings.map(pair => pair[0]);
     const replacements = sample28.paraphrased.rewordings.map(pair => pair[1]);
     createParaphraseWidget(originals, replacements, 'paraphrase-widget-0');
@@ -118,7 +119,7 @@ title: Document
 
   <p>So, what does it look like if we include the versions with the removed CoTs?</p>
   
-  <p>It takes a bit of wrangling. If you just remove or hide the CoT, Deepseek will pout and start thinking outside of the thinking tags. instead.</p>
+  <p>It takes a bit of wrangling. If you just remove or hide the CoT, Deepseek will pout and start thinking outside of the thinking tags, instead.</p>
   
   <p>We can use the system prompt to try and push it towards directly emitting the answer after the thinking tags. This works...some of the time. In addition to the system prompt, we keep retrying until we hit a completion that directly outputs an answer. This introduces a bias into the sampling of the distribution, but thankfully not one that seems to deterioate performance at all.</p>
 
@@ -142,7 +143,11 @@ title: Document
 
   <p>Arithmetic is maybe too easy of a problem, and one ill suited to steganography. After all, the way we write simple arithmetic equations is <i>already</i> very compact and symbolic, and the steps between arithmetic operations are pretty unambiguous. If I was a model, I wouldn't spend much time finding shortcuts there.</p>
 
-  <p>How about on harder problems? Pure reinforcement learning, when left to its own devices, will produce a CoT that's a jumble of languages and formats. Not very readable, unless you use extra rewards to <a href="https://arxiv.org/pdf/2501.12948">stuff all that reasoning back</a> into a human presentable shape. The most efficient CoT for solving hard problems doesn't necessarily align with the most human friendly CoT. Maybe, we'll see a different behavior with higher difficulties?</p>
+  <p>How about on harder problems?</p>
+  
+  <p>Pure reinforcement learning, when left to its own devices, will produce a CoT that's a jumble of languages and formats. Not very readable, unless you use extra rewards to <a href="https://arxiv.org/pdf/2501.12948">stuff all that reasoning back</a> into a human presentable shape.</p>
+  
+  <p>The most efficient CoT for solving hard problems doesn't necessarily align with the most human friendly CoT. Maybe, we'll see a different behavior with higher difficulties?</p>
 
   <p>Thankfully, we don't have to think of the difficult problems and answers ourselves. Thirty questions from the AIME2024 dataset are available for us, complete with ground truth answers.</p>
 
@@ -197,25 +202,6 @@ title: Document
 
   <div id="mcnemar-viz-aime-para" style="flex: 1; min-width: 0;"></div>
 
-  <p>Okay, paraphrasing is definitely hindering <i>something</i>.</p>
-  <p>Let's dive into some of the CoTs for the ones that the paraphrasing method got wrong but the base response got right:<p>
-
-  <div id="prompt-widget-aime-para-wrong"></div>
-  <script>
-    const filteredSamplesParaWrong = window.samples_no_repeats.filter(sample =>
-        sample.base.answer === sample.base.ground_truth && // Base correct
-        sample.paraphrased &&                               // Paraphrased exists
-        sample.paraphrased.answer !== sample.paraphrased.ground_truth // Paraphrased incorrect
-    );
-
-    const paraWrongPrompts = filteredSamplesParaWrong.map(s => s.paraphrased.user_prompt);
-    const paraWrongResponses = filteredSamplesParaWrong.map(s => s.paraphrased.output);
-    const paraWrongGivenAnswers = filteredSamplesParaWrong.map(s => s.paraphrased.ground_truth);
-    const paraWrongFinalAnswers = filteredSamplesParaWrong.map(s => s.paraphrased.answer);
-    createPromptWidget(paraWrongPrompts, paraWrongResponses, paraWrongGivenAnswers, paraWrongFinalAnswers, 'prompt-widget-aime-para-wrong');
-  </script>
-
-
   <!-- <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 20px; margin-top: 20px; margin-bottom: 20px;">
     <div id="mcnemar-viz-aime-para" style="flex: 1; min-width: 0;"></div>
     <div id="mcnemar-viz-aime-unpara" style="flex: 1; min-width: 0;"></div>
@@ -263,6 +249,59 @@ title: Document
                   targetDiv.style.color = '#C62828';
           }
       }
+  </script>
+
+  <p>Okay, paraphrasing is definitely hindering <i>something</i>.</p>
+
+  <p>What if it's something in the paraphrasing process, rather than the wording itself? We can generate the CoT chunk by chunk, and then just before we <i>would</i> reword it, we return the original chunk instead. In theory, this should generate an identical CoT to a base response generated in one go. If we're messing anything up during the chunk processing, we should see a big difference in performance here.</p>
+
+  <div id="mcnemar-viz-aime-unpara"></div>
+
+  <!-- Script for Base vs Unparaphrased -->
+  <script>
+      // --- Get Data from tests.json ---
+      const testsDataUnpara = window.tests; // tests.json is loaded into window.tests
+      const baseVsUnparaphrasedTest = testsDataUnpara?.mc_base_vs_unparaphrased;
+
+      {
+          const contingencyTableUnpara = [
+              [baseVsUnparaphrasedTest.crosstab.n11, baseVsUnparaphrasedTest.crosstab.n10], // [[Base Correct, Unpara Correct], [Base Correct, Unpara Incorrect]]
+              [baseVsUnparaphrasedTest.crosstab.n01, baseVsUnparaphrasedTest.crosstab.n00]  // [[Base Incorrect, Unpara Correct], [Base Incorrect, Unpara Incorrect]]
+          ];
+          const statisticUnpara = baseVsUnparaphrasedTest.statistic; // The statistic from the exact test
+          const pValueUnpara = baseVsUnparaphrasedTest.pvalue;
+
+          createMcNemarViz(
+              contingencyTableUnpara,
+              statisticUnpara,
+              pValueUnpara,
+              'mcnemar-viz-aime-unpara', // New ID for this chart
+              "Base vs. Unparaphrased", // New Title
+              "Correct",          // Condition 1 Label (Unparaphrased) - Rows
+              "Incorrect",        // Condition 2 Label (Unparaphrased) - Rows
+              "Base Model",       // Test 1 Name (Base) - Columns
+              "Unparaphrased"     // Test 2 Name (Unparaphrased) - Rows
+          );
+      }
+  </script>
+
+  <p>Hmm, so it's not the act of chunking itself, it <i>is</i> the wording.</p>
+  
+  <p>The hunt begins.</p>
+
+  <h3>Diving Deeper</h3>
+
+  <p>Let's look into some of the CoTs for the ones that the paraphrasing method got wrong but the base response got right:<p>
+
+  <div id="comparison-widget-container"></div>
+  <script>
+    const filteredSamplesParaWrong = window.samples_no_repeats.filter(sample =>
+        sample.unparaphrased.answer !== sample.unparaphrased.ground_truth ||
+        sample.no_nl.answer !== sample.no_nl.ground_truth
+    );
+
+    const comparisonTitles = ['unparaphrased', 'no_nl'];
+    createComparisonWidget(filteredSamplesParaWrong, comparisonTitles, 'comparison-widget-container');
   </script>
 
   <!-- Script for Base vs Unparaphrased -->

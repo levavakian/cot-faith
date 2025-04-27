@@ -443,6 +443,7 @@ def populate_datastore(datastore, samples, rewordings, results, answers, name):
     datastore[name]["paraphrased"]["rewordings"] = rewordings[1]
     datastore[name]["concise"]["rewordings"] = rewordings[2]
     datastore[name]["no_nl"]["rewordings"] = rewordings[3]
+
 def arithmetic(suffix=""):
     random.seed(87)
     samples = gen_dataset(num_samples=30, options=[1])
@@ -531,7 +532,7 @@ if __name__ == "__main__":
     datastore["aime"] = {}
     aime()
     aime("_2")
-    # aime("_3")
+    aime("_3")
 
     # datastore["arithmetic"] = {}
     # arithmetic()
