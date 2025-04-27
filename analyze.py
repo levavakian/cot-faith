@@ -208,7 +208,7 @@ def mcnemar_and_treatment_effect(group_a, group_b):
     target.pvalue = mcnemar_test.pvalue
     target.exact = True
 
-    b, c = ct[1][0], ct[0][1]
+    b, c = ct[0][1], ct[1][0]
     p_low, p_high = proportion_confint(count=c, nobs=b+c, alpha=0.05, method="wilson")
 
     N = len(group_a)
