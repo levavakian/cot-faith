@@ -356,7 +356,11 @@ title: Document
     <li>The total response length tends to grow.</li>
     <li>The number of reasoning steps relative to the unparaphrased completions increases.</li>
   </ul>
-  <p>We can hit all of these at once by putting a directive in the system prompt to be more concise when rewording. We can see the effect in these three graphs:</p>
+  <p>Of the three, only the increase in the number of reasoning steps passes the Wilcoxon test for statistical significance, but we can hit all of these at once by putting a directive in the system prompt to be more concise when rewording. We can see the effect in these three graphs:</p>
+
+  <br>
+  <br>
+  <br>
 
   <div style="height: 500px; margin-bottom: 20px;"> <!-- Add a container div for sizing -->
     <canvas id="reword-scatter-plot"></canvas>
@@ -369,6 +373,10 @@ title: Document
         'reword-scatter-plot'       // The ID of the canvas element
     );
   </script>
+
+  <br>
+  <br>
+  <br>
 
   <!-- Response-length scatter for paraphrased completions that were CORRECT -->
   <div style="height: 500px; margin-bottom: 20px;"> <!-- Container for sizing -->
@@ -385,6 +393,10 @@ title: Document
     }
   </script>
 
+  <br>
+  <br>
+  <br>
+
   <div style="height: 500px; margin-bottom: 20px;"> <!-- Container for sizing -->
     <canvas id="steps-scatter-plot"></canvas>
   </div>
@@ -397,7 +409,11 @@ title: Document
     );
   </script>
 
-  <p>Wilcoxon tests help confirm that the length increases by the paraphrased completions compared to the base responses were statistically significant, and that the concise responses do not have the same issue. The concise responses still have a statistically significant more amount of reasoning steps than the unparaphrased responses, but the effect size goes down drastically.</p>
+  <br>
+  <br>
+  <br>
+
+  <p>The concise responses still have a statistically significant more amount of reasoning steps than the unparaphrased responses, but the effect size goes down drastically, to a paltry median ratio of 1.06.</p>
 
   <p>So, does this account for the accuracy gap caused by paraphrasing?</p>
 

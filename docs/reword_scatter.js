@@ -149,7 +149,7 @@ function createRewordScatterPlot(interventionTypes, samples, targetElementId) {
   new Chart(ctx, config);
 
   // --- Add Median Ratio Display ---
-  let averagesHtml = `<div style="text-align: center; margin-top: 10px;"><span style="font-size: 0.8em;">Median Reword Ratio (Reworded Length / Original Length):</span><br>`;
+  let averagesHtml = `<div style="text-align: center; margin-top: 10px;"><span style="font-size: 0.8em;"><strong>Median Reword Ratio (Reworded Length / Original Length of Reasoning Chunk):</strong></span><br>`;
   interventionTypes.forEach(type => {
       const ratios = ratioLists[type];
       let median = 0;

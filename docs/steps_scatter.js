@@ -148,7 +148,7 @@ function createStepsScatterPlot(interventionTypes, samples, targetElementId) {
   new Chart(ctx, config);
 
    // --- Add Median Step Ratio Display (Relative to Unparaphrased) ---
-  let mediansHtml = `<div style="text-align: center; margin-top: 10px;"><span style="font-size: 0.8em;"><strong>Median Step Ratio (vs. Unparaphrased):</strong></span><br>`;
+  let mediansHtml = `<div style="text-align: center; margin-top: 10px;"><span style="font-size: 0.8em;"><strong>Median Reasoning Steps Count Ratio (vs. Unparaphrased):</strong></span><br>`;
   interventionTypes.forEach(type => {
        // Only display for types other than 'unparaphrased'
       if (type !== 'unparaphrased' && ratioLists[type]) {
