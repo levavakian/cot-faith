@@ -200,7 +200,7 @@ title: Document
 
   <p>Oof, that's a lot worse.</p>
   
-  <p>But it's hard to tell from just eyeballing it. Let's get a better idea by using a McNemar test to see if the difference is statistically significant.</p>
+  <p>But it's hard to tell from just eyeballing it. Let's get a better idea by using a McNemar test to see if the difference is statistically significant. McNemar is a test specialized for paired trials, so we'll get a bit of extra power out of running multiple approaches against the same question.</p>
 
   <div id="mcnemar-viz-aime-para" style="flex: 1; min-width: 0;"></div>
 
@@ -332,7 +332,21 @@ title: Document
 
   <p>Let's make sure our inference is valid. First, what happens if we control for cases where the CoT seems to end unexpectedly?</p>
   
-  <p>We can detect these cases pretty easily. The model usually outputs what it thinks is the final answer before ending the CoT normally. If we don't find the final answer it gave in the last 300 characters of the CoT, we can assume we've found an abrupt end.</p>
+  <p>We can detect these cases pretty easily. The model usually outputs what it thinks is the final answer before ending the CoT normally. If we don't find the final boxed output it gave in the last 300 characters of the CoT, we can assume we've found an abrupt end.</p>
+
+  <div style="display: flex; gap: 1em; margin-bottom: 1em;">
+    <!-- Left Card: Truncated CoT -->
+    <div style="flex: 1; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); background-color: #f8f8f8; border: 1px solid #e0e0e0; overflow: hidden;">
+      <div style="padding: 8px 12px; background-color: #e0e0e0; font-weight: bold; font-size: 0.9em; color: #333;">Truncated CoT</div>
+      <div style="padding: 12px; font-family: monospace; vertical-align: top;">...and then, it should be a whole integer.&lt;/think&gt;\boxed{255} ❌</div>
+    </div>
+
+    <!-- Right Card: Healthy CoT -->
+    <div style="flex: 1; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); background-color: #f8f8f8; border: 1px solid #e0e0e0; overflow: hidden;">
+      <div style="padding: 8px 12px; background-color: #e0e0e0; font-weight: bold; font-size: 0.9em; color: #333;">Healthy CoT</div>
+      <div style="padding: 12px; font-family: monospace; vertical-align: top;">...so I think the final answer is 255&lt;/think&gt;\boxed{255} ✅</div>
+    </div>
+  </div>
 
   <p>Once we've partitioned our dataset, we can do a Cochran–Mantel–Haenszel test to see if the effect survives the control. We have the very convenient <code>StratifiedTable</code> class in <code>statsmodels</code> to do so, and our result is <code>p=7e-5</code>. Even when we control for the CoT cutting off, the paraphrased CoT performs worse!</p>
 
