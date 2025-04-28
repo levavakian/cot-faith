@@ -304,7 +304,7 @@ title: Document
     createComparisonWidget(filteredSamplesParaWrong, comparisonTitles, 'comparison-widget-container');
   </script>
 
-  <p>Interesting. It looks like in a lot of the cases the CoT just...ends abruptly. We know it's not a byproduct of the chunking process, since the unparaphrased results don't suffer from the same condition. We can also <i>delve</i> into one specific failure case:</p>
+  <p>Interesting. It looks like in a lot of the cases the CoT just...ends abruptly. We know it's not a byproduct of the chunking process, since the unparaphrased results don't suffer from the same condition. We can <i>delve</i> into one specific failure case:</p>
 
   <div id="paraphrase-widget-failure-no-mention"></div>
   <script src="reword.js"></script> <!-- Assuming reword.js is available -->
