@@ -328,7 +328,7 @@ title: Document
     <strong>Note:</strong> You might see extra thinking or the boxed answer after the <code>&lt;/think&gt;</code> cutoff tag in the pre-paraphrase chunk. Everything after the <code>&lt;/think&gt;</code> is cut off when sent to the paraphrasing section, then a final generation step is run to allow the model to reinsert the answer after the CoT is done.
   </div>
 
-  <p>The abrupt end of the CoT happens in the pre-paraphrased chunk! Something about the paraphrased CoT is causing an instability in the rollout, causing an early exit out of the reasoning block.</p>
+  <p>The abrupt end of the CoT happens in the pre-paraphrased chunk! Something about the paraphrased CoT is inducing an instability in the rollout, causing an early exit out of the reasoning block.</p>
 
   <p>Let's make sure our inference is valid. First, what happens if we control for cases where the CoT seems to end unexpectedly?</p>
   
