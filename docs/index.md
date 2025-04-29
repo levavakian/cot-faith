@@ -364,7 +364,7 @@ title: Document
 
   <p>We can, at least, rule out some easy reasons that <i>could</i> be the cause.</p>
 
-  <p>There are three, somewhat related qualities, about the paraphrasings:</p>
+  <p>There are three, somewhat related, qualities about the paraphrasings:</p>
   <ul>
     <li>Each chunk gets wordier when paraphrased.</li>
     <li>The total response length tends to grow.</li>
